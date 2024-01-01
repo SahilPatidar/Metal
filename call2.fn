@@ -1,0 +1,245 @@
+
+Value *IRCodegenVisitor::codegenCallExpr(ast::Expression &Expr, Value *Alloca) {
+        dumpir1("codegenCallExpr");
+    Value *V = codeGenStmt(Expr.getLhs());
+    if(dyn_cast<GetElementPtrInst>(V) || dyn_cast<AllocaInst>(V) || dyn_cast<LoadInst>(V)) {
+        Type *Ty = getType(V, Expr.getLhs());
+        V = Builder.CreateLoad(V->getType(), V);
+        FunctionType *FunTy = dyn_cast<FunctionType>(Ty);
+        std::vector<Value *> ArgV;
+        std::vector<ast::Ast *> &Args = static_cast<ast::FieldExpr *>(Expr.getRhs())->getArgs();
+
+        size_t i = 0;
+        for(size_t siz = FunTy->getNumParams(); i < siz; i++) {
+
+            Value *Arg = codegenArg(Args[i], FunTy->getFunctionParamType(i));
+            if(!Arg) {
+                return nullptr;
+            }
+            ArgV.push_back(Arg);
+        }
+        for(size_t siz = Args.size(); i < siz; i++) {
+            Value *Arg = codegenArg(Args[i], nullptr);
+            if(!Arg) {
+                return nullptr;
+            }
+            ArgV.push_back(Arg);
+        }
+        if((FunTy->getReturnType()->isArrayTy() || FunTy->getReturnType()->isStructTy()) && !Alloca) {
+            AllocaInst *alloca = Builder.CreateAlloca(FunTy->getReturnType());
+            Value *CallV = Builder.CreateCall(FunTy, V, ArgV);
+            Builder.CreateStore(CallV, alloca);
+            return alloca;
+        }
+        return Builder.CreateCall(FunTy, V, ArgV);
+    }
+    Function *CalleFn = dyn_cast<Function>(V);
+    if(!CalleFn) {
+        err::err_out(&Expr, "unable convert to IR");
+        return nullptr;
+    }
+    FunctionType *FunTy = CalleFn->getFunctionType();
+    std::vector<Value *> ArgV;
+    std::vector<ast::Ast *> &Args = static_cast<ast::FieldExpr *>(Expr.getRhs())->getArgs();
+
+    size_t i = 0;
+    for(size_t siz = FunTy->getNumParams(); i < siz; i++) {
+
+        Value *Arg = codegenArg(Args[i], FunTy->getFunctionParamType(i));
+        if(!Arg) {
+            return nullptr;
+        }
+        ArgV.push_back(Arg);
+    }
+    for(size_t siz = Args.size(); i < siz; i++) {
+        Value *Arg = codegenArg(Args[i], nullptr);
+        if(!Arg) {
+            return nullptr;
+        }
+        ArgV.push_back(Arg);
+    }
+
+    if((FunTy->getReturnType()->isArrayTy() || FunTy->getReturnType()->isStructTy()) && !Alloca) {
+        AllocaInst *alloca = Builder.CreateAlloca(FunTy->getReturnType());
+        Value *CallV = Builder.CreateCall(CalleFn, ArgV);
+        Builder.CreateStore(CallV, alloca);
+        return alloca;
+    }
+        dumpir2("codegenCallExpr");
+    return Builder.CreateCall(CalleFn, ArgV);
+}
+
+
+
+
+Value *IRCodegenVisitor::codegenAndCond(ast::Expression &Expr) {
+    const Tok &Op = Expr.getOp();
+    ast::Ast *&LhsExpr = Expr.getLhs();
+    ast::Ast *&RhsExpr = Expr.getRhs();
+
+    Value *Lhs = nullptr;
+    Value *Rhs = nullptr;
+    Value *LhsOp = Lhs;
+    Function *TheFunction = Builder.GetInsertBlock()->getParent();
+
+    if(FalseBB.empty()) {
+        BasicBlock *FinalBB = BasicBlock::Create(Context);
+        putFalseBB(FinalBB);
+    }
+
+    ///put true block in stack that lhs can use it if lhs condition become true.
+    /*
+    ...
+    ...
+    br lhs, truebb, falsebb
+    truebb:
+        ...
+        ...
+    */
+    BasicBlock *TBB = BasicBlock::Create(Context);
+    putTrueBB(TBB);
+    Lhs = codeGenStmt(LhsExpr);
+    dropTrueBB();
+    if(!Lhs){
+        err::err_out(&Expr, "unable convert binary expression to IR");
+        return nullptr;
+    }
+
+    if(!dyn_cast<BranchInst>(Lhs))
+        Builder.CreateCondBr(Lhs, TBB, FalseBB.back());
+
+    TheFunction->insert(TheFunction->end(), TBB);
+    Builder.SetInsertPoint(TBB);
+    //preserve False BB if right condition is grouped with And and Or operator
+    BasicBlock *MBB = FalseBB.back();
+    dropFalseBB();
+    Rhs = codeGenStmt(RhsExpr);
+    putFalseBB(MBB);
+    if(!Rhs){
+        err::err_out(&Expr, "unable convert binary expression to IR");
+        return nullptr;
+    }
+    if(!TrueBB.empty() && !FalseBB.empty()) {
+        if(!dyn_cast<BranchInst>(Rhs))
+            return Builder.CreateCondBr(Rhs, TrueBB.back(), FalseBB.back());
+        return Rhs;
+    }
+    BasicBlock *FinalBB = FalseBB.back();
+    dropFalseBB();
+    if(!FalseBB.empty()) {
+        TheFunction->insert(TheFunction->end(), FalseBB.back());
+        Builder.SetInsertPoint(FalseBB.back());
+        if(!GenPHI(Rhs, Type::getInt1Ty(Context))) {
+            err::err_out(RhsExpr, "Falied to generate PHI");
+            return nullptr;
+        }
+        dropFalseBB();
+    }
+    Value *ResultV = Builder.CreateBr(FinalBB);
+    TheFunction->insert(TheFunction->end(), FinalBB);
+    Builder.SetInsertPoint(FinalBB);
+    return ResultV;
+}
+
+Value *IRCodegenVisitor::codegenOrCond(ast::Expression &Expr) {
+    const Tok &Op = Expr.getOp();
+    ast::Ast *&LhsExpr = Expr.getLhs();
+    ast::Ast *&RhsExpr = Expr.getRhs();
+
+    Value *Lhs = nullptr;
+    Value *Rhs = nullptr;
+
+    Function *TheFunction = Builder.GetInsertBlock()->getParent();
+
+    if(TrueBB.empty()) {
+        BasicBlock *FinalBB = BasicBlock::Create(Context);
+        putTrueBB(FinalBB);
+    }
+
+    BasicBlock *TBB = TrueBB.back();
+    BasicBlock *FBB = BasicBlock::Create(Context);
+    putFalseBB(FBB);
+    Lhs = codeGenStmt(LhsExpr);
+    dropFalseBB();
+    if(!Lhs) {
+        err::err_out(&Expr, "unable convert binary expression to IR");
+        return nullptr;
+    }
+    if(!dyn_cast<BranchInst>(Lhs))
+        Builder.CreateCondBr(Lhs, TBB, FBB);
+    TheFunction->insert(TheFunction->end(), FBB);
+    Builder.SetInsertPoint(FBB);
+    //Merge
+    BasicBlock *MBB = TrueBB.back();
+    dropTrueBB();
+    Rhs = codeGenStmt(RhsExpr);
+    putTrueBB(MBB);
+    if(!Rhs) {
+        err::err_out(&Expr, "unable convert binary expression to IR");
+        return nullptr;
+    }
+    if(!TrueBB.empty() && !FalseBB.empty()) {
+        if(!dyn_cast<BranchInst>(Lhs))
+            return Builder.CreateCondBr(Rhs, TBB, FalseBB.back());
+        return Rhs;
+    }
+    BasicBlock *FinalBB = TrueBB.back();
+    dropTrueBB();
+    if(!TrueBB.empty()) {
+        TheFunction->insert(TheFunction->end(), TrueBB.back());
+        Builder.SetInsertPoint(TrueBB.back());
+        if(!GenPHI(Rhs, Type::getInt1Ty(Context))){
+            err::err_out(RhsExpr, "Falied to generate PHI");
+            return nullptr;
+        }
+        dropTrueBB();
+    }
+    Value *ResultV = Builder.CreateBr(FinalBB);
+    TheFunction->insert(TheFunction->end(), FinalBB);
+    Builder.SetInsertPoint(FinalBB);
+    return ResultV;
+}
+
+
+
+const Tok &Op = Expr.getOp();
+    ast::Ast *&LhsExpr = Expr.getLhs();
+    ast::Ast *&RhsExpr = Expr.getRhs();
+
+    Value *Lhs = nullptr;
+    Value *Rhs = nullptr;
+    Value *LhsOp = Lhs;
+    Function *TheFunction = Builder.GetInsertBlock()->getParent();
+    // BasicBlock *PhiBB = BasicBlock::Create(Context);
+    BasicBlock *PhiBB = FalseBB.back();
+    Lhs = codeGenStmt(LhsExpr);
+    if(!Lhs){
+        err::err_out(LhsExpr, "unable convert binary expression to IR");
+        return nullptr;
+    }
+    if(!dyn_cast<BranchInst>(Lhs)) {
+        BasicBlock *TBB = BasicBlock::Create(Context);
+        Builder.CreateCondBr(Lhs, TBB, PhiBB);
+        TheFunction->insert(TheFunction->end(), TBB);
+        Builder.SetInsertPoint(TBB);
+    }
+
+    Rhs = codeGenStmt(RhsExpr);
+    if(!Rhs){
+        err::err_out(RhsExpr, "unable convert binary expression to IR");
+        return nullptr;
+    }
+
+    if(FalseBB.empty())
+        return Rhs;
+
+    Builder.CreateBr(PhiBB);
+    TheFunction->insert(TheFunction->end(), PhiBB);
+    Builder.SetInsertPoint(PhiBB);
+    PHINode *Phi = GenPHI(Rhs, Type::getInt1Ty(Context));
+    if(!Phi) {
+        err::err_out(RhsExpr, "Falied to generate PHI");
+        return nullptr;
+    }
+    
+    return Phi;
