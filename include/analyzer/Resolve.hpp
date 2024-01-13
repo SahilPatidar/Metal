@@ -3,7 +3,7 @@
 // #include"../parser/type.hpp"
 #include"symbol_table.hpp"
 // #include"../Module.hpp"
-#include"../ResMgr.hpp"
+#include"../Context.hpp"
 #include"Table.hpp"
 #include"Extern.hpp"
 // #include"analyzer/AstVisitor.hpp"
@@ -15,12 +15,12 @@ namespace ast{
 
 class Resolve{
 private:
-    ResourceMgr &mgr;
+    Context &mgr;
     Module *RootModule;
     Table<Ast *>STable;
     Module *ThisModule{nullptr};
     FunctionDef *Func{nullptr};
-    std::map<std::string, Module*> Mods;
+    Map<String, Module*> Mods;
     ExternHandler ExtHandler;
     bool ScopeOnly{false};
 
@@ -32,9 +32,9 @@ private:
 
     // bool check_path(Ast **source, Expression *AstNode, Module *&mod, Ast *&Node);
 
-    std::string mangle_name(std::string str, std::string modid, Ast *stmt);
+    String mangle_name(String str, String modid, Ast *stmt);
 
-    Ast *getModItem(Module *mod, std::string ID);
+    Ast *getModItem(Module *mod, String ID);
 
     bool visit(NewStmt *AstNode, Ast **Base);
     bool visit(DelStmt *AstNode, Ast **Base);
@@ -71,7 +71,7 @@ private:
     bool visit(NullLiteral  *AstNode, Ast **Base);
     bool visit(StringLiteral  *AstNode, Ast **Base);
 public:
-    Resolve(ResourceMgr &_mgr, Module *_RMod)
+    Resolve(Context &_mgr, Module *_RMod)
     :mgr(_mgr), RootModule(_RMod), STable() {}
     ~Resolve() {}
 

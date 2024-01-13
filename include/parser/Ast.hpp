@@ -10,7 +10,6 @@
 // #include"analyzer/AstVisitor.hpp"
 // #include"type.hpp"
 
-using namespace lex;
 
 namespace ast{
 
@@ -54,6 +53,7 @@ namespace ast{
         NodeNewStmt,
         NodeDelStmt
     };
+
     #define _GLOB 8
     #define _METHOD 32
     #define _EXTERN 16
@@ -62,8 +62,10 @@ namespace ast{
     #define _ASSOC 8 
     #define _CONST 4
     #define _MUT 2
+
     
     class Type;
+    class Expression;
     class Ast {
     protected:
         const StmtLoc *loc;
@@ -137,7 +139,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeBlockStm), stmts(_state) {}
         ~BlockStmt() {}
 
-        static BlockStmt *Create(ResourceMgr &mgr, const StmtLoc *_Loc,  const std::vector<Ast *> &stmts);
+        static BlockStmt *Create(Context &mgr, const StmtLoc *_Loc,  const std::vector<Ast *> &stmts);
         inline std::vector<Ast *>& getStmts() noexcept {return stmts;}
         inline bool empty() const noexcept { return stmts.empty(); }
         std::string toString() const;
@@ -153,7 +155,7 @@ namespace ast{
 
         inline Ast *&getTy() noexcept { return Ty; }
         inline Ast *&getSize() noexcept { return Size; }
-        static NewStmt *Create(ResourceMgr &Mgr, const StmtLoc *_loc, Ast *_Ty, Ast *_Size);
+        static NewStmt *Create(Context &Mgr, const StmtLoc *_loc, Ast *_Ty, Ast *_Size);
         std::string toString() const;
     private:
         Ast *Ty;
@@ -168,7 +170,7 @@ namespace ast{
         ~DelStmt() {}
 
         inline Ast *&getPtr() noexcept { return VPtr; }
-        static DelStmt *Create(ResourceMgr &Mgr, const StmtLoc *_loc, Ast *_VPtr);
+        static DelStmt *Create(Context &Mgr, const StmtLoc *_loc, Ast *_VPtr);
         std::string toString() const;
     private:
         Ast *VPtr;
@@ -182,7 +184,7 @@ namespace ast{
         NullLiteral(const StmtLoc *_Loc,  const Lexeme &_tok)
         :Ast(_Loc, NodeCategory::NodeNullLit), tok(_tok) {}
         ~NullLiteral() {}
-        static NullLiteral *Create(ResourceMgr &mgr, const StmtLoc *_Loc,   const Lexeme &_tok);
+        static NullLiteral *Create(Context &mgr, const StmtLoc *_Loc,   const Lexeme &_tok);
         inline Lexeme& getLexeme() noexcept { return tok; }
         std::string toString() const;
 
@@ -198,7 +200,7 @@ namespace ast{
         :Ast(_Loc, NodeNumLit), tok(_tok) {}
         ~NumericLiteral() {}
 
-        static NumericLiteral *Create(ResourceMgr &mgr, const StmtLoc *_Loc,   const Lexeme &_tok);
+        static NumericLiteral *Create(Context &mgr, const StmtLoc *_Loc,   const Lexeme &_tok);
         inline Lexeme& getLexeme() noexcept { return tok; };
         std::string toString() const;
     };
@@ -213,7 +215,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeBoolLit), tok(_tok) {}
         ~BoolLiteral() {}
 
-        static BoolLiteral *Create(ResourceMgr &mgr, const StmtLoc *_Loc,   const Lexeme &_tok);
+        static BoolLiteral *Create(Context &mgr, const StmtLoc *_Loc,   const Lexeme &_tok);
         //std::string value() const;
         inline Lexeme& getLexeme()  { return tok; }
         std::string toString() const;
@@ -230,7 +232,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeStrLit), tok(_tok), chr(_chr) {}
         ~StringLiteral() {}
 
-        static StringLiteral *Create(ResourceMgr &mgr, const StmtLoc *_Loc,   const Lexeme &_tok, bool _chr);
+        static StringLiteral *Create(Context &mgr, const StmtLoc *_Loc,   const Lexeme &_tok, bool _chr);
         inline Lexeme& getLexeme() { return tok; }
         //std::string value() const{ return tok.data; }
         inline bool ischar() noexcept { return chr; }
@@ -247,7 +249,7 @@ namespace ast{
         FloatLiteral(const StmtLoc *_Loc,  const Lexeme &_tok)
         :Ast(_Loc, NodeCategory::NodeFloatLit), tok(_tok) {}
         ~FloatLiteral() {}
-        static FloatLiteral *Create(ResourceMgr &mgr, const StmtLoc *_Loc,   const Lexeme &_tok);
+        static FloatLiteral *Create(Context &mgr, const StmtLoc *_Loc,   const Lexeme &_tok);
         inline Lexeme& getLexeme() noexcept { return tok; }
         //std::string value() const { return tok.data; }
         std::string toString() const;
@@ -259,7 +261,7 @@ namespace ast{
         Void(const StmtLoc *_Loc)
         :Ast(_Loc, NodeCategory::NodeVoid) {}
         ~Void() {}
-        static Void *Create(ResourceMgr &mgr, const StmtLoc *_Loc);
+        static Void *Create(Context &mgr, const StmtLoc *_Loc);
         std::string toString() const;
     };
 
@@ -272,7 +274,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeIdent), tok(_tok), isTy(_isTy) {}
         ~Identifier() {}
 
-        static Identifier *Create(ResourceMgr &mgr, const StmtLoc *_Loc,  const Lexeme &_tok, bool _isTy = false);
+        static Identifier *Create(Context &mgr, const StmtLoc *_Loc,  const Lexeme &_tok, bool _isTy = false);
         inline Lexeme& getLexeme() noexcept { return tok; }
         inline std::string getIdent() noexcept { return tok.getStr(); }
         inline bool HasSelf() noexcept { return tok.getTokTy() == Token_type::SELF; }
@@ -294,7 +296,7 @@ namespace ast{
 
 
 
-        static VarStmt *Create(ResourceMgr &mgr, const StmtLoc *_Loc, const Lexeme &_var, Ast *_type, Ast *_Val, int8_t _mask);
+        static VarStmt *Create(Context &mgr, const StmtLoc *_Loc, const Lexeme &_var, Ast *_type, Ast *_Val, int8_t _mask);
         // inline const Lexeme &getLexeme() {return tok;}
         inline Lexeme &getVar() noexcept {return var;}
         inline Ast *&getType() {return type;}
@@ -316,7 +318,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeUseStmt), path(_path) {}
         ~UseStmt() {}
 
-        static UseStmt *Create(ResourceMgr &mgr, const StmtLoc *_Loc,  Ast *_path);
+        static UseStmt *Create(Context &mgr, const StmtLoc *_Loc,  Ast *_path);
         inline Ast *&getPath() { return path; }
         std::string toString() const;
         
@@ -332,7 +334,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeEnum), Name(_Name), Evals(_Evals) {}
         ~EnumExpr() {}
 
-        static EnumExpr *Create(ResourceMgr &mgr, const StmtLoc *_Loc,  const Lexeme &_Name, const std::vector<VarStmt *>&_Evals);
+        static EnumExpr *Create(Context &mgr, const StmtLoc *_Loc,  const Lexeme &_Name, const std::vector<VarStmt *>&_Evals);
         inline Lexeme& getName() noexcept { return Name; }
         inline std::vector<VarStmt *> &getEVals() noexcept { return Evals; }
         std::string toString() const;
@@ -349,7 +351,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeImpl), Name(_Name), AssociateTo(_AssociateTo), Impl(_impl) {}
         ~Method() {}
 
-        static Method *Create(ResourceMgr &mgr, const StmtLoc *_Loc,  Ast *_Name, Ast *_AssociateTo, std::vector<Ast *>&_impl);
+        static Method *Create(Context &mgr, const StmtLoc *_Loc,  Ast *_Name, Ast *_AssociateTo, std::vector<Ast *>&_impl);
         inline Ast *&getName() noexcept { return Name; }
         inline Ast *&getAssociativity() { return AssociateTo; }
         inline std::vector<Ast *>& getImpl() { return Impl; }
@@ -363,7 +365,7 @@ namespace ast{
         :Ast(_Loc, NodeExtern), ID(_ID) {}
         ~Extern() {}
 
-        static Extern *Create(ResourceMgr &mgr, const StmtLoc *_Loc, const Lexeme &_ID, bool isFn);
+        static Extern *Create(Context &mgr, const StmtLoc *_Loc, const Lexeme &_ID, bool isFn);
         inline Lexeme &getID() noexcept {return ID;}
         inline bool IsFn() const noexcept {return isFn;}
         inline bool IsStruct() const noexcept {return !isFn;}
@@ -382,7 +384,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodePreDefTy), tok(_tok) {}
         ~PremitiveType() {}
 
-        static PremitiveType *Create(ResourceMgr &mgr, const StmtLoc *_Loc,   const Lexeme &_tok);
+        static PremitiveType *Create(Context &mgr, const StmtLoc *_Loc,   const Lexeme &_tok);
         inline Lexeme &getLexeme() noexcept { return tok; }
         inline Tok getType() const noexcept { return tok.getTok(); }
         inline const Token_type getTType() const noexcept { return tok.getTokTy(); }
@@ -406,7 +408,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodePrefix), op(_op), base(_Type), Mut(_Mut), isType(_isType) {}
         ~PrefixExpr() {}
 
-        static PrefixExpr *Create(ResourceMgr &mgr, const StmtLoc *_Loc, Tok _op, Ast *_Type, bool _Mut, bool _isType);
+        static PrefixExpr *Create(Context &mgr, const StmtLoc *_Loc, Tok _op, Ast *_Type, bool _Mut, bool _isType);
         inline const Tok &getOp() const noexcept { return op; }
         inline Ast *&getBase()  { return base; }
         inline bool IsType() const noexcept { return isType; }
@@ -415,41 +417,54 @@ namespace ast{
 
     };
 
-    enum KExpr{
-        KCallExpr,
-        KIndexExpr,
-        KStructExpr,
-        KBinaryExpr,
-        KMemExpr,
-        KPathExpr,
-        KAsExpr,
-        KIsExpr,
-        KExtCallExpr,
-    };
-
     class Expression: public Ast{
+        public:
+        enum ExprID{
+            KCallExpr,
+            KIndexExpr,
+            KStructExpr,
+            KBinaryExpr,
+            KMemExpr,
+            KPathExpr,
+            KAsExpr,
+            KIsExpr,
+            KExtCallExpr,
+        };
+        #define isExpr(N, Ty)          \
+            bool is##N() const noexcept { return ExprTy == Ty; }                   
+
+        isExpr(CastExpr, KAsExpr)
+        isExpr(StructExpr, KStructExpr)
+        isExpr(CallExpr, KCallExpr)
+        isExpr(ExtCallExpr, KExtCallExpr)
+        isExpr(BinExpr, KBinaryExpr)
+        isExpr(IndexExpr, KIndexExpr)
+        isExpr(MemAccessExpr, KMemExpr)
+        isExpr(IsExpr, KIsExpr)
+        isExpr(PathExpr,  KPathExpr)
+
         private:
         Ast * LHS;
         Tok Op;
         Ast * RHS;
-        KExpr Kexpr;
+        ExprID ExprTy;
         public:
         explicit Expression(const StmtLoc *_Loc,  Ast *_LHS, Tok _op, Ast *_RHS,
-                     KExpr _Kexpr)
-        :Ast(_Loc, NodeCategory::NodeExpr), LHS(_LHS),Op(_op), RHS(_RHS), Kexpr(_Kexpr) {}
+                     ExprID _ExprTy)
+        :Ast(_Loc, NodeCategory::NodeExpr), LHS(_LHS),Op(_op), RHS(_RHS), ExprTy(_ExprTy) {}
         explicit Expression(const StmtLoc *_Loc,  Ast *_LHS, Ast *_RHS,
-                     KExpr _Kexpr)
-        :Ast(_Loc, NodeCategory::NodeExpr), LHS(_LHS), Op({}), RHS(_RHS), Kexpr(_Kexpr) {}
+                     ExprID _ExprTy)
+        :Ast(_Loc, NodeCategory::NodeExpr), LHS(_LHS), Op({}), RHS(_RHS), ExprTy(_ExprTy) {}
         ~Expression() {}
 
-        static Expression *Create(ResourceMgr &mgr, const StmtLoc *_Loc, Ast *_LHS, Tok _op, Ast *_RHS,
-                     KExpr _Kexpr);
-        static Expression *Create(ResourceMgr &mgr, const StmtLoc *_Loc, Ast *_LHS, Ast *_RHS,
-                     KExpr _Kexpr);
+        static Expression *Create(Context &mgr, const StmtLoc *_Loc, Ast *_LHS, Tok _op, Ast *_RHS,
+                     ExprID _ExprTy);
+        static Expression *Create(Context &mgr, const StmtLoc *_Loc, Ast *_LHS, Ast *_RHS,
+                     ExprID _ExprTy);
         inline Ast *&getLhs()  {return LHS;}
         inline const Tok &getOp() const noexcept {return Op;}
         inline Ast *&getRhs()  {return RHS;}
-        inline KExpr ExprTy() const noexcept { return Kexpr; }
+        inline ExprID getExprID() const noexcept {return ExprTy;}
         std::string toString() const;
 
     };
@@ -461,7 +476,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeGroupExpr), expr(_expr) {}
         ~GroupedExpr() {}
 
-        static GroupedExpr *Create(ResourceMgr &mgr, const StmtLoc *_Loc,   Ast *_expr);
+        static GroupedExpr *Create(Context &mgr, const StmtLoc *_Loc,   Ast *_expr);
         inline Ast *& getExpression()  { return expr; }
         std::string toString() const;
     
@@ -477,7 +492,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeFnTy), ty(_ty), ret(_ret) {}
         ~FnType() {}
 
-        static FnType *Create(ResourceMgr &mgr, const StmtLoc *_Loc, const std::vector<Ast *>&_ty, Ast *_ret);
+        static FnType *Create(Context &mgr, const StmtLoc *_Loc, const std::vector<Ast *>&_ty, Ast *_ret);
         inline std::vector<Ast *> &getParamType() { return ty; }
         inline Ast *& getRetType()  { return ret; }
         std::string toString() const;
@@ -494,7 +509,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeArray), Size(_Size), Ty(_Ty) {}
         ~Array() {}
 
-        static Array *Create(ResourceMgr &mgr, const StmtLoc *_Loc, Ast *_Size, Ast *_Ty);
+        static Array *Create(Context &mgr, const StmtLoc *_Loc, Ast *_Size, Ast *_Ty);
         inline Ast *&getArraySize() {return Size;}
         inline Ast *&getArrayTy() {return Ty;}
         std::string toString() const;
@@ -512,7 +527,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeWhileStm), expr(_expr), body(_body)  {}
         ~WhileLoop() {}
 
-        static WhileLoop *Create(ResourceMgr &mgr, const StmtLoc *_Loc,  Ast *_expr, BlockStmt *_body );
+        static WhileLoop *Create(Context &mgr, const StmtLoc *_Loc,  Ast *_expr, BlockStmt *_body );
         inline Ast *&getCond()  { return expr; }
         inline BlockStmt *&getBlock()  { return body; }
         std::string toString() const;
@@ -531,7 +546,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeForStm), var(_var), cond(_cond), incr(_incr), body(_body)  {}
         ~ForLoop() {}
 
-        static ForLoop *Create(ResourceMgr &mgr, const StmtLoc *_Loc, Ast *_var, Ast *_cond, Ast *_incr, BlockStmt *_body );
+        static ForLoop *Create(Context &mgr, const StmtLoc *_Loc, Ast *_var, Ast *_cond, Ast *_incr, BlockStmt *_body );
         inline Ast *&getVar()  { return var; }
         inline Ast *&getCond()  { return cond; }
         inline Ast *&getIncr()  { return incr; }
@@ -552,7 +567,7 @@ namespace ast{
                         elblock(_elblock) {}
         ~IfStmt() {}
 
-        static IfStmt *Create(ResourceMgr &mgr, const StmtLoc *_Loc,  Ast *_cond , BlockStmt *_ifblock,
+        static IfStmt *Create(Context &mgr, const StmtLoc *_Loc,  Ast *_cond , BlockStmt *_ifblock,
                              Ast *_elblock);
         inline const Ast *getCondV() const { return cond; }
         inline Ast *&getCondV()  { return cond; }
@@ -572,7 +587,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeBranchStm), tok(_tok) {}
         ~BranchStmt() {}
 
-        static BranchStmt *Create(ResourceMgr &mgr, const StmtLoc *_Loc, const Lexeme &_tok);
+        static BranchStmt *Create(Context &mgr, const StmtLoc *_Loc, const Lexeme &_tok);
         inline Lexeme &getLexeme() noexcept { return tok; }
         std::string toString() const;
         
@@ -591,7 +606,7 @@ namespace ast{
         {}
         ~UserDefinedTy() {}
 
-        static UserDefinedTy *Create(ResourceMgr &mgr, const StmtLoc *_Loc, Ast *_Expr);
+        static UserDefinedTy *Create(Context &mgr, const StmtLoc *_Loc, Ast *_Expr);
         inline Ast *&getExpr() { return Expr; }
         std::string toString() const;
         
@@ -612,7 +627,7 @@ namespace ast{
         ~StructStmt() {}
 
 
-        static StructStmt *Create(ResourceMgr &mgr, const StmtLoc *_Loc, const Lexeme &_Ident,
+        static StructStmt *Create(Context &mgr, const StmtLoc *_Loc, const Lexeme &_Ident,
                         std::vector<VarStmt *>&_field);
     
         inline void setExtern() noexcept { Extern = true; }
@@ -648,7 +663,7 @@ namespace ast{
         inline bool IsAssociateFunc() const noexcept{ return mask&_ASSOC; }
         inline void setAssociateFunc() noexcept{  mask = mask|_ASSOC; }
 
-        static FunctionProto *Create(ResourceMgr &mgr, const StmtLoc *_Loc,  const Lexeme &_Name, const std::vector<VarStmt *>&_Param, Ast *_RetTy);
+        static FunctionProto *Create(Context &mgr, const StmtLoc *_Loc,  const Lexeme &_Name, const std::vector<VarStmt *>&_Param, Ast *_RetTy);
         inline Lexeme &getFuncName() noexcept { return Name; }
         inline std::vector<VarStmt *>& getParameter() { return Param; }
         inline Ast *&getResultType() noexcept { return RetTy; }
@@ -667,7 +682,7 @@ namespace ast{
         ~FunctionDef() {}
 
 
-        static FunctionDef *Create(ResourceMgr &mgr, const StmtLoc *_Loc, FunctionProto *_FnSig, BlockStmt *_Block);
+        static FunctionDef *Create(Context &mgr, const StmtLoc *_Loc, FunctionProto *_FnSig, BlockStmt *_Block);
         inline FunctionProto *getFnProto() const noexcept { return FuncSig; }
         inline BlockStmt *getFuncBlock() const noexcept { return Block; }
         // inline bool IsMemberFunc() const noexcept{ return mask&_METHOD; }
@@ -687,7 +702,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeRetStm), val(_Val) {}
         ~ReturnStmt() {}
 
-        static ReturnStmt *Create(ResourceMgr &mgr, const StmtLoc *_Loc, Ast *_Val);
+        static ReturnStmt *Create(Context &mgr, const StmtLoc *_Loc, Ast *_Val);
         inline Ast *&getRetValue() noexcept { return val; }
         inline BlockStmt *&getFnBlk() noexcept {return Blk;}
         inline void setFnBlk(BlockStmt *_Blk) noexcept { Blk = _Blk;}
@@ -704,7 +719,7 @@ namespace ast{
         :Ast(_Loc, NodeCategory::NodeField), args(_args) {}
         ~FieldExpr() {}
 
-        static FieldExpr *Create(ResourceMgr &mgr, const StmtLoc *_Loc, const std::vector<Ast *>&_args);
+        static FieldExpr *Create(Context &mgr, const StmtLoc *_Loc, const std::vector<Ast *>&_args);
         inline std::vector<Ast *> &getArgs() { return args; }
         inline void setC(bool _Const = true) noexcept { Const = _Const; }
         inline bool isCF() const noexcept { return Const; }

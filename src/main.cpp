@@ -11,83 +11,75 @@
 #include"../include/codegen/Asm.hpp"
 #include"../include/utils/File.hpp"
 #include"../include/Module.hpp"
-#include"../include/ResMgr.hpp"
-
+#include"../include/Context.hpp"
 
 using namespace ast;
 
 
 int main(int argc, char *argv[]){
-    if(argc < 1){
+    if(argc <= 1){
         printf("too few args");
         return EXIT_FAILURE;
     }
-   // std::string path = "../test/HeapSort.mt";
-   // std::string path = "../test/String.mt";
-   // std::string path = "../test/Tri.mt";
-   // std::string path = "../test/Enum.mt";
-   // std::string path = "../test/t2.mt";
-   // std::string path = "../test/array.mt";
-   // std::string path = "../test/RedBlackTree.mt";
-   // std::string path = "../test/tbttest.mt";
-   // std::string path = "../test/Struct.mt";
-   // std::string path = "../test/Graph.mt";
-   // std::string path = "../test/Queue.mt";
-   // std::string path = "../test/BinarySearchTree.mt";
-   std::string path = argv[1];
+
+   std::string filePath = argv[1];
    ModuleInfo modinfo = {};
-   if(!CreateModInfoByAbsPath(path, modinfo)){
-      std::cout<<"unable to build modinfo"<<std::endl;
+   if(!CreateModInfoByAbsPath(filePath, modinfo)){
       return 0;
    }
-   ResourceMgr Mgr;
+   Context Mgr;
    Module *M = Mgr.CreateMod(modinfo);
    ModuleHelper MH(M);
-   // if(!M->LexSrc()||!M->ParseToken()){
-   //    std::cout<<"unable to build mod"<<std::endl;
-   //    return 0;
-   // }
 
    if(!MH.LexSrc(Mgr)){
-      std::cout<<"unable to build lex of mod"<<std::endl;
       return 1;
    }
 
    if(!MH.ParseToken(Mgr)){
-      std::cout<<"unable to build parse tree of mod"<<std::endl;
       return 1;
    }
 
-   M->printTree();
    if(!MH.ResolveAst(Mgr, M)) {
-      std::cout<<"unable resolve"<<std::endl;
       return 1;
    }
    if(!MH.SemaAst(Mgr, M)){
-      std::cout<<"unable analyze"<<std::endl;
       return 1;
    }
 
    if(!codegen::InitCodegen(M)){
       return 1;
    }
-   // llvm::LLVMContext Context;
-   // llvm::IRBuilder<> Builder(Context);
-   // llvm::Module TheModule("main", Context);
-   // codegen::IRCodegenVisitor CodeGen(Context, TheModule, Builder);
-   // if(!CodeGen.codeGen(M->getTree())) {
-   //    return 1;
-   // }
-   //    llvm::verifyModule(TheModule);
 
-   // std::error_code err;
-   // llvm::raw_fd_ostream OS("../test/func.ir", err);
-   // if(err)
-   //    std::cerr<<"error : unable to convert to ir"<<std::endl;
+   std::string Filename = "out.asm";
+  size_t lastSlashPos = filePath.find_last_of("/\\");
+  std::string outFile = "";
+  if (lastSlashPos != std::string::npos) 
+      outFile = filePath.substr(0, lastSlashPos) + "/out";
 
-   // TheModule.dump();
-   // codegen::LLVMIRToAsm(TheModule);
-   // TheModule.dump();
+  std::string clangCommand = "clang -o " + outFile + " " + Filename;
+  FILE *pipe = popen(clangCommand.c_str(), "r");
+  if (!pipe) {
+      std::cerr << "Error executing clang." << std::endl;
+      return 1;
+  }
 
+  std::array<char, 256> buffer;
+  std::string result;
+  while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+      result += buffer.data();
+  }
+
+  int clangResult = pclose(pipe);
+
+//   if (clangResult == 0) {
+      // Remove the assembly file
+//       if (std::remove(Filename) == 0) {
+//           std::cout << "Assembly file removed successfully." << std::endl;
+//       } else {
+//           std::cerr << "Error removing assembly file." << std::endl;
+//       }
+//   } else {
+//       std::cerr << "Error executing clang. Return code: " << clangResult << "\nOutput:\n" << result << std::endl;
+//   }
    return 0;
 }

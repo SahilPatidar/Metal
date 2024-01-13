@@ -1,14 +1,13 @@
 #pragma once
 #include<iostream>
 #include"Ast.hpp"
-#include"../ResMgr.hpp"
+#include"../Context.hpp"
 // #include"../Module.hpp"
 #include"../lex/lex.hpp"
 
 
 using namespace ast;
 namespace parser{
-    using namespace lex;
  
     class ParserHelper{
     private:
@@ -35,7 +34,7 @@ namespace parser{
             return peek_tt() == tok;
         }
 
-        inline bool checkn(Token_type tok) {
+        inline bool CheckAndConsume(Token_type tok) {
             if(peek_tt() == tok){
                 next();
                 return true;
@@ -109,12 +108,12 @@ namespace parser{
 
     class Parser{
     private:
-        ResourceMgr &mgr;
+        Context &mgr;
         Module* modctx;
     public:
         // Parser(Module *_modctx)
         // :modctx(_modctx){}
-        Parser(ResourceMgr &_mgr, Module* _modctx)
+        Parser(Context &_mgr, Module* _modctx)
         :mgr(_mgr), modctx(_modctx) {}
         
         ~Parser(){}

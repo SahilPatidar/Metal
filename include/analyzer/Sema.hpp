@@ -4,7 +4,7 @@
 #include"symbol_table.hpp"
 // #include"../Module.hpp"
 #include"ValCheck.hpp"
-#include"../ResMgr.hpp"
+#include"../Context.hpp"
 // #include"analyzer/StmtVisitor.hpp"
 // #include"parser/type.hpp"
 // #include"analyzer/symbol_table.hpp"
@@ -12,30 +12,30 @@
 namespace ast{
 class MethodHandler{
 public:
-    inline bool Has(const std::string &n) { return Impls.find(n) != Impls.end(); }
-    inline void insert(const std::string &n, FunctionProto *Fn) noexcept { Impls.insert({n, Fn}); }
-    inline FunctionProto *getImpl(const std::string &n) noexcept { return Impls.find(n) != Impls.end()?Impls[n]:nullptr; }
+    inline bool Has(const String &n) { return Impls.find(n) != Impls.end(); }
+    inline void insert(const String &n, FunctionProto *Fn) noexcept { Impls.insert({n, Fn}); }
+    inline FunctionProto *getImpl(const String &n) noexcept { return Impls.find(n) != Impls.end()?Impls[n]:nullptr; }
 private:
-    std::map<std::string, FunctionProto *>Impls;
+    Map<String, FunctionProto *>Impls;
 };
 
 class FieldValHandler{
 public:
-    inline bool Has(const std::string &n) { return Vals.find(n) != Vals.end(); }
-    inline void insert(const std::string &n, Ast *Val) noexcept { Vals.insert({n, Val}); }
-    inline Ast *getTag(const std::string &n) noexcept { return Vals.find(n) != Vals.end()?Vals[n]:nullptr; }
+    inline bool Has(const String &n) { return Vals.find(n) != Vals.end(); }
+    inline void insert(const String &n, Ast *Val) noexcept { Vals.insert({n, Val}); }
+    inline Ast *getTag(const String &n) noexcept { return Vals.find(n) != Vals.end()?Vals[n]:nullptr; }
 private:
-    std::map<std::string, Ast *>Vals;
+    Map<String, Ast *>Vals;
 };
 
 template<typename T>
 class FValueTable{
 public:
-    inline bool Has(const std::string &n) { return Vals.find(n) != Vals.end(); }
-    inline void insert(const std::string &n, T *Val) noexcept { Vals.insert({n, Val}); }
-    inline T *getTag(const std::string &n) noexcept { return Vals.find(n) != Vals.end()?Vals[n]:nullptr; }
+    inline bool Has(const String &n) { return Vals.find(n) != Vals.end(); }
+    inline void insert(const String &n, T *Val) noexcept { Vals.insert({n, Val}); }
+    inline T *getTag(const String &n) noexcept { return Vals.find(n) != Vals.end()?Vals[n]:nullptr; }
 private:
-    std::map<std::string, T *>Vals;
+    Map<String, T *>Vals;
 };
 
 
@@ -43,8 +43,8 @@ class TypeChecker {
 private:
     MethodHandler MT;
     FieldValHandler TagF;
-    std::map<std::string, NumericLiteral *>Tag;
-    ResourceMgr &mgr;
+    Map<String, NumericLiteral *>Tag;
+    Context &mgr;
     Module *RootMod;
     ValChecker valpass;
     Type *TyForConst{nullptr};
@@ -52,12 +52,12 @@ private:
     bool isConstF{false};
     bool BranchAllow{false};
 
-    std::string mangle_name(std::string str, std::string modid, Ast *stmt);
+    String mangle_name(String str, String modid, Ast *stmt);
 
-    void dumpSema(std::string msg){
+    void dumpSema(String msg){
         std::cout<<"step :: "<<"entering in -> "<<msg<<" "<<std::endl;
     }
-    void dumpSema2(std::string msg){
+    void dumpSema2(String msg){
         std::cout<<"step :: "<<"returning from -> "<<msg<<" "<<std::endl;
     }
 
@@ -65,6 +65,46 @@ private:
     bool TypeCorel(Type *&Ty, Type *&To, Ast *Expr, bool Const = false);
 
     Ast *getConstVal(Ast *Val, Ast **SrcPtr);
+
+    constexpr bool isAddressableValue(Ast *Expr) const noexcept {
+        Ast *Decl = Expr->getDecl();
+        if(!Decl || !Decl->Is(NodeVarStm)) {
+            return false;
+        }
+        return true;
+    }
+
+
+    constexpr bool isValue(Ast *Expr, bool ConstAllowed = true) const noexcept {
+        Ast *Decl = Expr->getDecl();
+        if(!Decl) {
+            if(!ConstAllowed) {
+                return false;
+            }
+            if(Expr->IsConst() || Expr->IsTydConst()) {
+                return true;
+            }
+        }
+        if(Decl->Is(NodeVarStm) || Decl->Is(NodeFNStm) || Decl->Is(NodeFnProto)) {
+            return true;
+        }
+        return false;
+    }
+
+    constexpr bool isTy(Ast *Expr) const noexcept {
+        if(Expr->Is(NodeIdent)) {
+            Ast *Decl = Expr->getDecl();
+            if(!Decl) {
+                return false;
+            }
+            if(!Decl->Is(NodeStructStm) && !Decl->Is(NodeEnum)) {
+                return false;
+            }
+        }else if(!(Expr->Is(NodeVoid) || Expr->Is(NodeArray) || Expr->Is(NodePreDefTy) || (Expr->Is(NodePrefix) && as<PrefixExpr>(Expr)->IsType()) || Expr->Is(NodeFnTy))) {
+            return false;
+        }
+        return false;
+    }
 
     bool CheckMethodCallExpr(Expression &Expr, Ast **Base);
     bool CheckCallerArg(Ast *Arg, Type *ParamTy);
@@ -124,14 +164,14 @@ private:
     bool visit(NullLiteral  *Stmt, Ast **Base);
     bool visit(StringLiteral  *Stmt, Ast **Base);
 public:
-    TypeChecker(ResourceMgr &_mgr, Module *_mod)
+    TypeChecker(Context &_mgr, Module *_mod)
     :mgr(_mgr), RootMod(_mod), valpass(mgr) {}
     ~TypeChecker() {}
 
     bool visit(Ast *Stmt, Ast **Base, Type *Ty = nullptr);
     bool Analyze(Ast *tree);
     bool Analyze(Module *Mod);
-    // bool CheckTypeAt(std::string s);
+    // bool CheckTypeAt(String s);
 
 };
 

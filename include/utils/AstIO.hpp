@@ -1,8 +1,14 @@
-#ifndef AIO_H_
-#define AIO_H_
+#pragma once
 
-namespace astio{
-void bar();
-void dis();
-}
-#endif
+#include "Core.hpp"
+
+namespace ast
+{
+namespace tio
+{
+void taba(bool show);
+void tabr(size_t num = 1);
+void print(bool has_next, InitList<StringRef> data);
+void printf(InitList<StringRef> data);
+} // namespace tio
+} // namespace sc

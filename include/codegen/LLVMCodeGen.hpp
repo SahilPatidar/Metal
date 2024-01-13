@@ -1,8 +1,6 @@
 #pragma once
 #include<iostream>
-#include<map>
-
-
+#include"../Core.hpp"
 #include<llvm/IR/DIBuilder.h>
 #include <llvm/Support/raw_ostream.h>
 #include "llvm/IR/LLVMContext.h"
@@ -39,7 +37,6 @@ private:
 
     std::vector<BasicBlock *>FalseBB;
     std::vector<BasicBlock *>TrueBB;
-
     std::map<uint64_t, Type *>TypeMap;
     bool isConstF{false};
 public:
@@ -96,6 +93,8 @@ public:
     Value *codegenOrCond(ast::Expression &Expr);
     
     Value *codegenBinaryExpr(ast::Expression &Expr);
+    Value *codegenConstantStruct(Type *STy, ast::Ast *&RhsExpr);
+    bool codegenStructElement(Type *STy, Value *Alloca, ast::VarStmt *V, size_t idx);
     Value *codegenStructExpr(ast::Expression &Expr, Value *Alloca = nullptr);
     Value *codegenArg(ast::Ast *Expr, Type *Ty);
     Value *codegenCallExpr(ast::Expression &Expr, Value *Alloca = nullptr);

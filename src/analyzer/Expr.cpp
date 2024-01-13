@@ -28,7 +28,7 @@ bool TypeChecker::visit(Identifier *AstNode, Ast **Base) {
 
      
     Lexeme &IDN = AstNode->getLexeme();
-    std::string N = IDN.getStr();
+    String N = IDN.getStr();
     if(Decl->Is(NodeEnum)) {
         IDN.setDataStr(static_cast<EnumExpr *>(Decl)->getName().getStr());
         /*
@@ -83,8 +83,8 @@ bool TypeChecker::CheckPathExpr(Expression &Expr, Ast **Base) {
     dumpSema(__func__);
     Ast *&Lhs = Expr.getLhs();
     Ast *&Rhs = Expr.getRhs();
-    std::string LhsN = Lhs->toString();
-    std::string RhsN = Rhs->toString();
+    String LhsN = Lhs->toString();
+    String RhsN = Rhs->toString();
 
     if(!visit(Lhs, &Lhs)) {
         return false;
@@ -118,7 +118,7 @@ bool TypeChecker::CheckPathExpr(Expression &Expr, Ast **Base) {
         *Base = Rhs;
     }else if(LhsTy->isEnumTy()) {
         EnumType *EnumTy = static_cast<EnumType *>(LhsTy);
-        std::string mangle_n = mangle_name(RhsN, Lhs->toString(), Rhs);
+        String mangle_n = mangle_name(RhsN, Lhs->toString(), Rhs);
         if(!TagF.Has(mangle_n)) {
             err::err_out(&Expr, "there is no `" ,  RhsN ,  "` named in enum field");
             return false;
@@ -136,8 +136,8 @@ bool TypeChecker::CheckIsExpr(Expression &Expr, Ast **Base) {
 
     Ast *&Lhs = Expr.getLhs();
     Ast *&Rhs = Expr.getRhs();
-    std::string LhsN = Lhs->toString();
-    std::string RhsN = Rhs->toString();
+    String LhsN = Lhs->toString();
+    String RhsN = Rhs->toString();
 
     if(!visit(Lhs, &Lhs)){
         return false;
@@ -231,8 +231,8 @@ bool TypeChecker::CheckBinaryExpr(Expression &Expr, Ast **Base) {
     dumpSema(__func__);
     Ast *&Lhs = Expr.getLhs();
     Ast *&Rhs = Expr.getRhs();
-    std::string LhsN = Lhs->toString();
-    std::string RhsN = Rhs->toString();
+    String LhsN = Lhs->toString();
+    String RhsN = Rhs->toString();
     const Tok &Op = Expr.getOp();
     Type *ResTy = nullptr;
     if(!visit(Lhs, &Lhs)){
@@ -355,8 +355,8 @@ bool TypeChecker::CheckStructExpr(Expression &Expr, Ast **Base) {
     dumpSema(__func__);
     Ast *&Lhs = Expr.getLhs();
     Ast *&Rhs = Expr.getRhs();
-    std::string LhsN = Lhs->toString();
-    std::string RhsN = Rhs->toString();
+    String LhsN = Lhs->toString();
+    String RhsN = Rhs->toString();
     if(!visit(Lhs, &Lhs)){
         err::err_out(&Expr, "failed to determined type of struct expression");
         return false;
@@ -374,7 +374,7 @@ bool TypeChecker::CheckStructExpr(Expression &Expr, Ast **Base) {
     }
 
     StructType *StructTy = static_cast<StructType*>(ty);
-    std::vector<Ast*>&field = static_cast<FieldExpr*>(Rhs)->getArgs();
+    Vec<Ast*>&field = static_cast<FieldExpr*>(Rhs)->getArgs();
     bool isConstV = true;
     for(auto &V: field){
         Ast *&Val = static_cast<VarStmt*>(V)->getVal();
@@ -426,10 +426,10 @@ bool TypeChecker::CheckMethodCallExpr(Expression &Expr, Ast **Base) {
     Ast *&Lhs = Expr.getLhs();
     Ast *&Rhs = Expr.getRhs();
     Ast *&caller = static_cast<Expression *>(Lhs)->getRhs();
-    std::string LhsN = Lhs->toString();
+    String LhsN = Lhs->toString();
     
     Ast *&self =  static_cast<Expression *>(Lhs)->getLhs();
-    lex::Token_type Op =  static_cast<Expression *>(Lhs)->getOp().getTokType();
+    Token_type Op =  static_cast<Expression *>(Lhs)->getOp().getTokType();
     if(!visit(self, &self)) {
         return false;
     }
@@ -453,8 +453,7 @@ bool TypeChecker::CheckMethodCallExpr(Expression &Expr, Ast **Base) {
                         "\n consider `.` to `->`");
             return false;
         }
-        ///@new
-        // selfTy = PtrTy->getTo();
+
         StTy = PtrTy->getTo();
     }else if(selfTy->isStructTy()) {
         if(Op != DOT) {
@@ -469,7 +468,7 @@ bool TypeChecker::CheckMethodCallExpr(Expression &Expr, Ast **Base) {
     StructType *STy = as<StructType>(StTy);
     
     Lexeme &Lxm = static_cast<Identifier *>(caller)->getLexeme();
-    std::string FnN = Lxm.getStr();
+    String FnN = Lxm.getStr();
     Lxm.setDataStr(mangle_name(FnN, STy->getStructStmt()->getName().getStr(), caller));
 
     FunctionProto *MtFn = MT.getImpl(Lxm.getStr());
@@ -486,8 +485,8 @@ bool TypeChecker::CheckMethodCallExpr(Expression &Expr, Ast **Base) {
         return false;
     }
 
-    std::vector<Ast *> &field = static_cast<FieldExpr*>(Rhs)->getArgs();
-    std::vector<Type *> &paramty = FuncType->getParamTypes();
+    Vec<Ast *> &field = static_cast<FieldExpr*>(Rhs)->getArgs();
+    Vec<Type *> &paramty = FuncType->getParamTypes();
 
     if(selfTy->isPointerTy())
         field.insert(field.begin(),self);
@@ -515,7 +514,7 @@ bool TypeChecker::CheckMethodCallExpr(Expression &Expr, Ast **Base) {
 }
 
 bool TypeChecker::CheckExternFnCall(Expression &Expr) {
-    std::string CalleName = as<FunctionProto>(Expr.getLhs())->getFuncName().getStr();
+    String CalleName = as<FunctionProto>(Expr.getLhs())->getFuncName().getStr();
     if(CalleName == "printf") {
         if(!CheckPrintExtCall(Expr)) {
             return false;
@@ -532,9 +531,9 @@ bool TypeChecker::CheckCallExpr(Expression &Expr, Ast **Base) {
     dumpSema(__func__);
     Ast *&Lhs = Expr.getLhs();
     Ast *&Rhs = Expr.getRhs();
-    std::string LhsN = Lhs->toString();
+    String LhsN = Lhs->toString();
 
-    if(Lhs->Is(NodeExpr) && static_cast<Expression *>(Lhs)->ExprTy() == KMemExpr) {
+    if(Lhs->Is(NodeExpr) && as<Expression>(Lhs)->isMemAccessExpr()) {
         if(!CheckMethodCallExpr(Expr, Base)){
             return false;
         }
@@ -563,8 +562,8 @@ bool TypeChecker::CheckCallExpr(Expression &Expr, Ast **Base) {
     }
     FunctionType *FuncType = static_cast<FunctionType *>(calleTy);
 
-    std::vector<Type *> &paramty = FuncType->getParamTypes();
-    std::vector<Ast *> &field = static_cast<FieldExpr*>(Rhs)->getArgs();
+    Vec<Type *> &paramty = FuncType->getParamTypes();
+    Vec<Ast *> &field = static_cast<FieldExpr*>(Rhs)->getArgs();
 
 
     if(field.size() < paramty.size()) {
@@ -609,7 +608,7 @@ bool TypeChecker::CheckCallExpr(Expression &Expr, Ast **Base) {
 
 
 bool IsValidCastingOprand(Ast *Opr) {
-    if(Opr->Is(NodeField) || (Opr->Is(NodeExpr) && static_cast<Expression *>(Opr)->ExprTy() == KStructExpr)
+    if(Opr->Is(NodeField) || (Opr->Is(NodeExpr) && as<Expression>(Opr)->isStructExpr())
                         || (Opr->Is(NodeIdent) && !Opr->getDecl()->Is(NodeVarStm))) {
         err::err_out(Opr, "invalid operand to cast");
         return false;
@@ -629,8 +628,8 @@ bool TypeChecker::CheckCastExpr(Expression &Expr, Ast **Base) {
     dumpSema(__func__);
     Ast *&Lhs = Expr.getLhs();
     Ast *&Rhs = Expr.getRhs();
-    std::string LhsN = Lhs->toString();
-    std::string RhsN = Rhs->toString();
+    String LhsN = Lhs->toString();
+    String RhsN = Rhs->toString();
 
     if(!IsValidCastingOprand(Lhs)) {
         return false;
@@ -730,8 +729,8 @@ bool TypeChecker::CheckIndexExpr(Expression &Expr, Ast **Base) {
     dumpSema(__func__);
     Ast *&Lhs = Expr.getLhs();
     Ast *&Rhs = Expr.getRhs();
-    std::string LhsN = Lhs->toString();
-    std::string RhsN = Rhs->toString();
+    String LhsN = Lhs->toString();
+    String RhsN = Rhs->toString();
     Ast *IdxExpr = Expr.getRhs();
     if(!visit(Lhs, &Lhs)){ 
         err::err_out(&Expr, "failed to determined type of index expression");
@@ -791,8 +790,8 @@ bool TypeChecker::CheckMemExpr(Expression &Expr, Ast **Base) {
     dumpSema(__func__);
     Ast *&Lhs = Expr.getLhs();
     Ast *&Rhs = Expr.getRhs();
-    std::string LhsN = Lhs->toString();
-    std::string RhsN = Rhs->toString();
+    String LhsN = Lhs->toString();
+    String RhsN = Rhs->toString();
     Type *LhsTy = nullptr;
     Type *RhsTy = nullptr;
     StructType *stTy = nullptr;
@@ -802,7 +801,6 @@ bool TypeChecker::CheckMemExpr(Expression &Expr, Ast **Base) {
     }
 
     Ast *&Decl = Lhs->getDecl();
-    // @new
     if(!Decl || (Decl && Decl->Is(NodeStructStm))) {
         err::err_out(Lhs, "expected struct value, found struct");
         return false;
@@ -956,7 +954,7 @@ bool TypeChecker::visit(StringLiteral  *AstNode, Ast **Base) {
 
 bool TypeChecker::visit(FieldExpr *AstNode, Ast **Base) {
     dumpSema("FieldExpr");
-    std::vector<Ast *> &field = AstNode->getArgs();
+    Vec<Ast *> &field = AstNode->getArgs();
     if(field.empty()){
         err::err_out(AstNode, "empty array field");
         return false;
@@ -1011,7 +1009,7 @@ bool TypeChecker::visit(PrefixExpr *AstNode, Ast **Base) {
             Type *baseTy = BaseVar->getTypeInfo();
             
             if(!baseTy->UnaryOpMatch(AstNode->getOp())) {
-                err::err_out(BaseVar, "mismatch operator\n"
+                err::err_out(BaseVar, "mismatch operator\n\t"
                             " *() can not be used with type - " ,  baseTy->toStr());
                 return false;
             }
@@ -1023,6 +1021,10 @@ bool TypeChecker::visit(PrefixExpr *AstNode, Ast **Base) {
 
             /// it can be function call or variable
             if(!Decl || (!Decl->Is(NodeVarStm) && !Decl->Is(NodeFNStm) && !Decl->Is(NodeFnProto))) {
+                err::err_out(BaseVar, "exprssion can not be dereferenced");
+                return false;
+            }
+            if(!isValue(BaseVar, false)) {
                 err::err_out(BaseVar, "exprssion can not be dereferenced");
                 return false;
             }
@@ -1074,8 +1076,7 @@ bool TypeChecker::visit(PrefixExpr *AstNode, Ast **Base) {
         }
 
         if(Op.getTokType() == AND) {
-            Ast *&Decl = BaseVar->getDecl();
-            if(!Decl || !Decl->Is(NodeVarStm)){
+            if(!isAddressableValue(BaseVar)) {
                 err::err_out(BaseVar, "exprssion is not addressable, &() can not be used with " ,  BaseVar->toString());
                 return false;
             }
@@ -1086,8 +1087,7 @@ bool TypeChecker::visit(PrefixExpr *AstNode, Ast **Base) {
             bool mut = false;
             if(AstNode->HasMut()) {
                  if(!BaseVar->IsMut()) {
-                    err::err_out(BaseVar, "defer in mutability\n"  
-                                        "Declaration is here " ,  Decl->toString());
+                    err::err_out(BaseVar, "defer in mutability\n");
                     return false;
                  }
                  mut = true;
@@ -1181,18 +1181,22 @@ bool TypeChecker::CheckExtCallExpr(Expression &Expr, Ast **Base) {
     dumpSema(__func__);
     Ast *&Lhs = Expr.getLhs();
     Ast *&Rhs = Expr.getRhs();
-    std::string call = Lhs->toString();
-    std::string RhsN = Rhs->toString();
+    String call = Lhs->toString();
+    String RhsN = Rhs->toString();
 
-    std::vector<Ast *> &field = static_cast<FieldExpr*>(Rhs)->getArgs();
+    Vec<Ast *> &field = static_cast<FieldExpr*>(Rhs)->getArgs();
 
     if(!field.empty()){
+        // const siz i32 = @szof(i32); i32 is not const in case;
+        bool HadConst = isConst;
+        isConst = false;
         for(size_t i = 0, siz = field.size(); i < siz; i++ ) {
             if(!visit(field[i], &field[i])){
                 err::err_out(field[i], "failed to determine type of argument");
                 return false;
             }
         }
+        isConst = HadConst;
     }
     if(call == "print") {
         if(!CheckPrintExtCall(Expr)) {
@@ -1207,6 +1211,7 @@ bool TypeChecker::CheckExtCallExpr(Expression &Expr, Ast **Base) {
         size_t sz = SizeOf(field[0]->getTypeInfo());
         *Base = NumericLiteral::Create(mgr, Expr.getStmtLoc(), Lexeme(Expr.getStmtLoc(), (int64_t)sz, INT));
         (*Base)->setType(IntType::Create(mgr, 64, false));
+        (*Base)->setConst();
     }else if(call == "asVoidPtr") {
         if(field.size() != 1) {
             err::err_out(Lhs, "too many args");
@@ -1233,33 +1238,33 @@ bool TypeChecker::CheckExtCallExpr(Expression &Expr, Ast **Base) {
 
 bool TypeChecker::visit(Expression *AstNode, Ast **Base) {
     dumpSema("Expression");
-    switch (AstNode->ExprTy())
+    switch (AstNode->getExprID())
     {
-    case KMemExpr:
+    case Expression::KMemExpr:
         return CheckMemExpr(*AstNode, Base);
         break;
-    case KBinaryExpr:
+    case Expression::KBinaryExpr:
         return CheckBinaryExpr(*AstNode, Base);
         break;
-    case KAsExpr:
+    case Expression::KAsExpr:
         return CheckCastExpr(*AstNode, Base);
     break;
-    case KIsExpr:
+    case Expression::KIsExpr:
         return CheckIsExpr(*AstNode, Base);
     break;
-    case KPathExpr:
+    case Expression::KPathExpr:
         return CheckPathExpr(*AstNode, Base);
     break;
-    case KIndexExpr:
+    case Expression::KIndexExpr:
         return CheckIndexExpr(*AstNode, Base);
     break;
-    case KStructExpr:
+    case Expression::KStructExpr:
         return CheckStructExpr(*AstNode, Base);
     break;
-    case KCallExpr:
+    case Expression::KCallExpr:
         return CheckCallExpr(*AstNode, Base);
     break;
-    case KExtCallExpr:
+    case Expression::KExtCallExpr:
         return CheckExtCallExpr(*AstNode, Base);
     break;
     default:

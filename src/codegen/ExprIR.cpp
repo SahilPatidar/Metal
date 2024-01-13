@@ -61,7 +61,7 @@ Constant *IRCodegenVisitor::codeGenFloatLiteral(ast::FloatLiteral *AstNode) {
 
 Constant *IRCodegenVisitor::codeGenBoolLiteral(ast::BoolLiteral *AstNode) {
     dumpir1("BoolLiteral");
-    return AstNode->getLexeme().getTokTy() == TRUE?ConstantInt::getTrue(Context): ConstantInt::getFalse(Context);
+    return AstNode->getLexeme().getTokTy() == ast::TRUE?ConstantInt::getTrue(Context): ConstantInt::getFalse(Context);
 }    
 
 
@@ -69,7 +69,7 @@ Constant *IRCodegenVisitor::codeGenStringLiteral(ast::StringLiteral *AstNode) {
     dumpir1("StringLiteral");
     Constant* StrVal;
     if(AstNode->ischar()) {
-        StrVal = ConstantInt::get(getTypeUsingStmtTypeInfo(AstNode->getTypeInfo()), (uint8_t)AstNode->getLexeme().getStr()[0]);
+        StrVal = ConstantInt::get(getTypeUsingStmtTypeInfo(AstNode->getTypeInfo()), (uint8_t)AstNode->getLexeme().getDataInt());
     }else
         StrVal = Builder.CreateGlobalStringPtr(AstNode->getLexeme().getStr());
 
@@ -124,7 +124,7 @@ Value *IRCodegenVisitor::codegenFieldExpr(ast::FieldExpr *AstNode, Value *Alloca
 
 Value *IRCodegenVisitor::codeGenPrefixExpr(ast::PrefixExpr *AstNode) {
     dumpir1(__func__);
-    lex::Token_type Op = AstNode->getOp().getTokType();
+    ast::Token_type Op = AstNode->getOp().getTokType();
     ast::Ast *Var = AstNode->getBase();
     Value *Val = codeGenStmt(Var);
     Type *VTy = getType(Val, Var);
@@ -134,7 +134,7 @@ Value *IRCodegenVisitor::codeGenPrefixExpr(ast::PrefixExpr *AstNode) {
     }
     switch (Op)
     {
-    case lex::STAR:
+    case ast::STAR:
     {
         if(!Var->Is(ast::NodePrefix) && dyn_cast<CallInst>(Val)) {
             return Val;
@@ -147,19 +147,19 @@ Value *IRCodegenVisitor::codeGenPrefixExpr(ast::PrefixExpr *AstNode) {
         return Val;
     }
         break;
-    case lex::AND:
+    case ast::AND:
     {
         return Val;
     }
         break;
-    case lex::PLUS:
-    case lex::MINUS:
+    case ast::PLUS:
+    case ast::MINUS:
     {
         return Builder.CreateNeg(LoadValue(Var, Val, VTy));
     }
         break;
-    case lex::CND_NOT:
-    case lex::NOT:
+    case ast::CND_NOT:
+    case ast::NOT:
     {
         return Builder.CreateNot(LoadValue(Var, Val, VTy));
     }
@@ -171,7 +171,7 @@ Value *IRCodegenVisitor::codeGenPrefixExpr(ast::PrefixExpr *AstNode) {
 }
 
 Value *IRCodegenVisitor::codegenPhiAndCond(ast::Expression &Expr) {
-    const Tok &Op = Expr.getOp();
+    const ast::Tok &Op = Expr.getOp();
     ast::Ast *&LhsExpr = Expr.getLhs();
     ast::Ast *&RhsExpr = Expr.getRhs();
 
@@ -198,12 +198,9 @@ Value *IRCodegenVisitor::codegenPhiAndCond(ast::Expression &Expr) {
     dropFalseBB();
     Rhs = codeGenStmt(RhsExpr);
     if(!Rhs){
-        err::err_out(RhsExpr, "unable convert binary expression to IR");
+        err::err_out(RhsExpr, "IR generation failed");
         return nullptr;
     }
-
-    // if(FalseBB.empty())
-    //     return Rhs;
 
     Builder.CreateBr(PhiBB);
     TheFunction->insert(TheFunction->end(), PhiBB);
@@ -217,7 +214,7 @@ Value *IRCodegenVisitor::codegenPhiAndCond(ast::Expression &Expr) {
 }
 
 Value *IRCodegenVisitor::codegenAndCond(ast::Expression &Expr) {
-    const Tok &Op = Expr.getOp();
+    const ast::Tok &Op = Expr.getOp();
     ast::Ast *&LhsExpr = Expr.getLhs();
     ast::Ast *&RhsExpr = Expr.getRhs();
 
@@ -251,11 +248,7 @@ Value *IRCodegenVisitor::codegenAndCond(ast::Expression &Expr) {
     }
 
     if(!dyn_cast<BranchInst>(Lhs)) {
-        // BasicBlock *TBB = BasicBlock::Create(Context);
         Builder.CreateCondBr(Lhs, TBB, FalseBB.back());
-        // Builder.CreateCondBr(Lhs, TrueBB.back(), FalseBB.back());
-        // TheFunction->insert(TheFunction->end(), TrueBB.back());
-        // Builder.SetInsertPoint(TrueBB.back());
     }
 
     TheFunction->insert(TheFunction->end(), TBB);
@@ -271,7 +264,6 @@ Value *IRCodegenVisitor::codegenAndCond(ast::Expression &Expr) {
         if(!dyn_cast<BranchInst>(Rhs)) {
             return Builder.CreateCondBr(Rhs, TrueBB.back(), FalseBB.back());
         }
-        // return Rhs;
     }
     // if(FalseBB.empty()){}
 
@@ -279,7 +271,7 @@ Value *IRCodegenVisitor::codegenAndCond(ast::Expression &Expr) {
 }
 
 Value *IRCodegenVisitor::codegenPhiOrCond(ast::Expression &Expr) {
-    const Tok &Op = Expr.getOp();
+    const ast::Tok &Op = Expr.getOp();
     ast::Ast *&LhsExpr = Expr.getLhs();
     ast::Ast *&RhsExpr = Expr.getRhs();
 
@@ -299,10 +291,7 @@ Value *IRCodegenVisitor::codegenPhiOrCond(ast::Expression &Expr) {
     }
 
     if(!dyn_cast<BranchInst>(Lhs)) {
-        // BasicBlock *FBB = BasicBlock::Create(Context);
         Builder.CreateCondBr(Lhs, PhiBB, FBB);
-        // TheFunction->insert(TheFunction->end(), FBB);
-        // Builder.SetInsertPoint(FBB);
     }
 
     TheFunction->insert(TheFunction->end(), FBB);
@@ -331,7 +320,7 @@ Value *IRCodegenVisitor::codegenPhiOrCond(ast::Expression &Expr) {
 }
 
 Value *IRCodegenVisitor::codegenOrCond(ast::Expression &Expr) {
-    const Tok &Op = Expr.getOp();
+    const ast::Tok &Op = Expr.getOp();
     ast::Ast *&LhsExpr = Expr.getLhs();
     ast::Ast *&RhsExpr = Expr.getRhs();
 
@@ -367,9 +356,6 @@ Value *IRCodegenVisitor::codegenOrCond(ast::Expression &Expr) {
 
     if(!dyn_cast<BranchInst>(Lhs)) {
         Builder.CreateCondBr(Lhs, TrueBB.back(), FBB);
-        // Builder.CreateCondBr(Lhs, TrueBB.back(), FalseBB.back());
-        // TheFunction->insert(TheFunction->end(), FalseBB.back());
-        // Builder.SetInsertPoint(FalseBB.back());
     }
     TheFunction->insert(TheFunction->end(), FBB);
     Builder.SetInsertPoint(FBB);
@@ -386,21 +372,31 @@ Value *IRCodegenVisitor::codegenOrCond(ast::Expression &Expr) {
         }
         // return Rhs;
     }
-    // if(FalseBB.empty()){}
-
     return Rhs;
 }
-    
+
+void extractIntegerTypeInfo(Value *Val, bool &IsSigned, uint64_t &Mask) {
+    if (IntegerType *ITy = dyn_cast<IntegerType>(Val->getType())) {
+        IsSigned = ITy->getSignBit();
+        Mask = ITy->getBitMask();
+    }
+}
+
+// Function to check and extract floating-point type information
+bool isFloatingPointType(Value *Val) {
+    return Val->getType()->isFloatTy() || Val->getType()->isDoubleTy();
+}
+
 Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
     dumpir1("codegenBinaryExpr");
-    const Tok &Op = Expr.getOp();
+    const ast::Tok &Op = Expr.getOp();
     ast::Ast *&LhsExpr = Expr.getLhs();
     ast::Ast *&RhsExpr = Expr.getRhs();
 
     Value *Lhs = nullptr;
     Value *Rhs = nullptr;
-    if(Op.getTokType() == CND_AND || Op.getTokType() == CND_OR) {
-        if(Op.getTokType() == CND_AND)
+    if(Op.getTokType() == ast::CND_AND || Op.getTokType() == ast::CND_OR) {
+        if(Op.getTokType() == ast::CND_AND)
             return codegenAndCond(Expr);
         else
             return codegenOrCond(Expr);
@@ -421,7 +417,6 @@ Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
     Value *Inst = nullptr;
     bool LIsS = false;
     bool RIsS = false;
-    bool IsFPTy = false;
     uint64_t LMask = 0;
     uint64_t RMask = 0;
     Value *LhsOp = Lhs;
@@ -432,37 +427,16 @@ Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
         Lhs = LoadValue(LhsExpr, Lhs, LOprTy);
     }
     Rhs = LoadValue(RhsExpr, Rhs, ROprTy);
+ 
+    extractIntegerTypeInfo(Lhs, LIsS, LMask);
+    extractIntegerTypeInfo(Rhs, RIsS, RMask);
 
-    
-    if(Lhs->getType()->isIntegerTy()) {
-        IntegerType *ITy = static_cast<IntegerType *>(Lhs->getType());
-        if(ITy->getSignBit()) {
-            LIsS = true;
-        }
-        LMask = ITy->getBitMask();
-    }
-
-    if(Rhs->getType()->isIntegerTy()) {
-        IntegerType *ITy = static_cast<IntegerType *>(Rhs->getType());
-        if(ITy->getSignBit()) {
-            RIsS = true;
-        }
-        RMask = ITy->getBitMask();
-    }
-
-    if(Lhs->getType()->isFloatTy() || 
-        Rhs->getType()->isFloatTy() || 
-        Lhs->getType()->isDoubleTy() ||
-        Rhs->getType()->isDoubleTy()) {
-        IsFPTy = true;
-    }
-
+    bool IsFPTy = isFloatingPointType(Lhs) || isFloatingPointType(Rhs);
     
     switch (Op.getTokType())
     {
-    case lex::PLUS:        
+    case ast::PLUS:        
     {
-
         if(IsFPTy)
             Inst = Builder.CreateFAdd(Lhs, Rhs);
         else if(LIsS || RIsS) 
@@ -471,7 +445,7 @@ Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
             Inst = Builder.CreateNUWAdd(Lhs, Rhs);
     }
         break;
-    case lex::MINUS:
+    case ast::MINUS:
         if(IsFPTy)
             Inst = Builder.CreateFSub(Lhs, Rhs);
         else 
@@ -481,7 +455,7 @@ Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
                 Inst = Builder.CreateNUWSub(Lhs, Rhs);
 
         break;
-    case lex::STAR:
+    case ast::STAR:
         if(IsFPTy)
             Inst = Builder.CreateFMul(Lhs, Rhs);
         else 
@@ -491,7 +465,7 @@ Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
                 Inst = Builder.CreateNUWMul(Lhs, Rhs);
 
         break;
-    case lex::DIV:
+    case ast::DIV:
         if(IsFPTy)
             Inst = Builder.CreateFDiv(Lhs, Rhs);
         else 
@@ -501,7 +475,7 @@ Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
                 Inst = Builder.CreateUDiv(Lhs, Rhs);
 
         break;
-    case lex::MODULO:
+    case ast::MODULO:
         if(IsFPTy)
             Inst = Builder.CreateFRem(Lhs, Rhs);
         else 
@@ -510,85 +484,85 @@ Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
             else 
                 Inst = Builder.CreateURem(Lhs, Rhs);
         break;
-    case lex::LSHIFT:
+    case ast::LSHIFT:
         Inst = Builder.CreateLShr(Lhs, Rhs);
         break;
-    case lex::RSHIFT:
+    case ast::RSHIFT:
         Inst = Builder.CreateShl(Lhs, Rhs);
         break;
-    case lex::CND_AND:
+    case ast::CND_AND:
         break;
-    case lex::CND_OR:
+    case ast::CND_OR:
         break;
-    case lex::OR:
+    case ast::OR:
         Inst = Builder.CreateOr(Lhs, Rhs);
         break;
-    case lex::AND:
+    case ast::AND:
         Inst = Builder.CreateAnd(Lhs, Rhs);
         break;
-    case lex::XOR:
+    case ast::XOR:
         Inst = Builder.CreateXor(Lhs, Rhs);
         break;
-    case lex::ASN:
+    case ast::ASN:
     {
         Inst = Builder.CreateStore(Rhs, LhsOp);
     }
         break;
-    case lex::ASN_AND:
+    case ast::ASN_AND:
     {
         Value *Val = Builder.CreateAnd(Lhs,Rhs);
         Inst = Builder.CreateStore(Val,LhsOp);
     }
         break;
-    case lex::ASN_DIV:
+    case ast::ASN_DIV:
     {
         Value *Val = Builder.CreateUDiv(Lhs,Rhs);
         Inst = Builder.CreateStore(Val,LhsOp);
     }
         break;
-    case lex::ASN_LSHIFT:
+    case ast::ASN_LSHIFT:
     {
         Value *Val = Builder.CreateLShr(Lhs,Rhs);
         Inst = Builder.CreateStore(Val,LhsOp);
     }
         break;
-    case lex::ASN_MINUS:
+    case ast::ASN_MINUS:
     {
         Value *Val = Builder.CreateSub(Lhs,Rhs);
         Inst = Builder.CreateStore(Val,LhsOp);
     }
         break;
-    case lex::ASN_MOD:
+    case ast::ASN_MOD:
     {
         Value *Val = Builder.CreateURem(Lhs,Rhs);
         Inst = Builder.CreateStore(Val,LhsOp);
     }
         break;
-    case lex::ASN_OR:
+    case ast::ASN_OR:
     {
         Value *Val = Builder.CreateOr(Lhs,Rhs);
         Inst = Builder.CreateStore(Val,LhsOp);
     }
         break;
-    case lex::ASN_XOR:
+    case ast::ASN_XOR:
     {
         Value *Val = Builder.CreateXor(Lhs,Rhs);
         Inst = Builder.CreateStore(Val,LhsOp);
     }
         break;
-    case lex::ASN_PLUS:
+    case ast::ASN_PLUS:
     {
         Value *Val = Builder.CreateAdd(Lhs,Rhs);
         Inst = Builder.CreateStore(Val,LhsOp);
     }
         break;
-    case lex::ASN_RSHIFT:
+    case ast::ASN_RSHIFT:
     {
         Value *Val = Builder.CreateShl(Lhs,Rhs);
         Inst = Builder.CreateStore(Val,LhsOp);
     }
         break;
-    case lex::GT:
+    case ast::GT:
         if(IsFPTy)
             Inst = Builder.CreateFCmpOGT(Lhs, Rhs);
         else 
@@ -597,7 +571,7 @@ Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
             else 
                 Inst = Builder.CreateICmpUGT(Lhs, Rhs);
         break;
-    case lex::LT:
+    case ast::LT:
         if(IsFPTy)
             Inst = Builder.CreateFCmpOLT(Lhs, Rhs);
         else 
@@ -606,7 +580,7 @@ Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
             else 
                 Inst = Builder.CreateICmpULT(Lhs, Rhs);
         break;
-    case lex::GEQL:
+    case ast::GEQL:
         if(IsFPTy)
             Inst = Builder.CreateFCmpOGE(Lhs, Rhs);
         else 
@@ -615,7 +589,7 @@ Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
             else 
                 Inst = Builder.CreateICmpUGE(Lhs, Rhs);
         break;
-    case lex::LEQL:
+    case ast::LEQL:
         if(IsFPTy)
             Inst = Builder.CreateFCmpOLE(Lhs, Rhs);
         else 
@@ -624,13 +598,13 @@ Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
             else 
                 Inst = Builder.CreateICmpULE(Lhs, Rhs);
         break;
-    case lex::EQL:
+    case ast::EQL:
         if(IsFPTy)
             Inst = Builder.CreateFCmpOEQ(Lhs, Rhs);
         else 
             Inst = Builder.CreateICmpEQ(Lhs, Rhs);
         break;     
-    case lex::NEQL:
+    case ast::NEQL:
         if(IsFPTy)
             Inst = Builder.CreateFCmpONE(Lhs, Rhs);
         else 
@@ -645,56 +619,68 @@ Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
 }
 
 
+// Helper function to generate constant structs
+Value *IRCodegenVisitor::codegenConstantStruct(Type *STy, ast::Ast *&RhsExpr) {
+    std::vector<ast::Ast *> &Vals = static_cast<ast::FieldExpr *>(RhsExpr)->getArgs();
+    std::vector<Constant *> FVals;
+
+    for (size_t i = 0, size = Vals.size(); i < size; i++) {
+        ast::VarStmt *V = static_cast<ast::VarStmt *>(Vals[i]);
+        Constant *CVal = codeGenConst(V->getVal());
+
+        if (!CVal) {
+            err::err_out(Vals[i], "unable to convert to IR");
+            return nullptr;
+        }
+
+        FVals.push_back(CVal);
+    }
+
+    return ConstantStruct::get(static_cast<StructType *>(STy), FVals);
+}
+
+
+bool IRCodegenVisitor::codegenStructElement(Type *STy, Value *Alloca, ast::VarStmt *V, size_t idx) {
+    Value *Val = codeGenStmt(V->getVal());
+
+    if (!Val) {
+        err::err_out(V->getVal(), "unable to convert to IR");
+        return false;
+    }
+
+    Value *Addr = Builder.CreateStructGEP(STy, Alloca, idx);
+    Type *Ty = getType(Val, V->getVal());
+
+    if (!Ty) {
+        err::err_out(V->getVal(), "unable to convert to IR");
+        return false;
+    }
+
+    Val = LoadValue(V->getVal(), Val, Ty);
+    Builder.CreateStore(Val, Addr);
+
+    return true;
+}
+
 Value *IRCodegenVisitor::codegenStructExpr(ast::Expression &Expr, Value *Alloca) {
         dumpir1("codegenStructExpr");
 
     ast::Ast *&LhsExpr = Expr.getLhs();
     ast::Ast *&RhsExpr = Expr.getRhs();
     Type *STy = codeGenTy(LhsExpr);
-    std::vector<ast::Ast*>&Vals = static_cast<ast::FieldExpr *>(RhsExpr)->getArgs();
-    if(isConstF || static_cast<ast::FieldExpr *>(RhsExpr)->isCF()) {
-        std::vector<Constant *> FVals;
-        for(size_t i = 0, size = Vals.size(); i < size; i++) {
-            ast::VarStmt *V = static_cast<ast::VarStmt *>(Vals[i]);
-            FVals.push_back(codeGenConst(V->getVal()));
-            if(!FVals.back()) {
-                err::err_out(Vals[i], "unable convert to IR");
-                return nullptr;
-            }
-        }
-        return ConstantStruct::get(static_cast<StructType *>(STy), FVals);
-    }
+    std::vector<ast::Ast *>&Vals = static_cast<ast::FieldExpr *>(RhsExpr)->getArgs();
 
-    // Value *SVal = nullptr; 
+    if (isConstF || static_cast<ast::FieldExpr *>(RhsExpr)->isCF()) {
+        return codegenConstantStruct(STy, RhsExpr);
+    }
     if(!Alloca)
         Alloca = Builder.CreateAlloca(STy);
 
-    if(!Alloca) {
-        err::err_out(&Expr, "unable convert struct expr to IR");
-        return nullptr;
-    }
-
     for(size_t idx = 0, size = Vals.size(); idx < size; idx++) {
         ast::VarStmt *V = static_cast<ast::VarStmt *>(Vals[idx]);
-        Value *Val = codeGenStmt(V->getVal());
-        if(!Val) {
-            err::err_out(&Expr, "unable convert to IR");
+        if (!codegenStructElement(STy, Alloca, V, idx)) {
             return nullptr;
         }
-
-        Value *Addr = Builder.CreateStructGEP(STy, Alloca, idx);
-        if(!Addr) {
-            err::err_out(&Expr, "unable convert to IR");
-            return nullptr;
-        }
-
-        Type *Ty = getType(Val, V->getVal());
-        if(!Ty) {
-            err::err_out(&Expr, "unable convert to IR");
-            return nullptr;
-        }
-        Val = LoadValue(V->getVal(), Val, Ty);
-        Builder.CreateStore(Val, Addr);
     }
 
         dumpir2("codegenStructExpr");
@@ -721,19 +707,29 @@ Value *IRCodegenVisitor::codegenCallExpr(ast::Expression &Expr, Value *Alloca) {
         dumpir1("codegenCallExpr");
     Value *V = codeGenStmt(Expr.getLhs());
     FunctionType *FunTy = nullptr;
+
+    // Check if V is a pointer type and load if necessary
     if(dyn_cast<GetElementPtrInst>(V) || dyn_cast<AllocaInst>(V) || dyn_cast<LoadInst>(V)) {
         Type *Ty = getType(V, Expr.getLhs());
         V = Builder.CreateLoad(V->getType(), V);
+        if (dyn_cast<PointerType>(Ty)) {
+            err::err_out(&Expr, "unable to get function type from the loaded value");
+            return nullptr;
+        }
         FunTy = dyn_cast<FunctionType>(Ty);
-    }else 
-        FunTy = dyn_cast<Function>(V)->getFunctionType();
+    }else {
+        if (auto *Fun = dyn_cast<Function>(V)) {
+            FunTy = Fun->getFunctionType();
+        } else {
+            err::err_out(&Expr, "expected a function value");
+            return nullptr;
+        }
+    }
 
     std::vector<Value *> ArgV;
     std::vector<ast::Ast *> &Args = static_cast<ast::FieldExpr *>(Expr.getRhs())->getArgs();
-
     size_t i = 0;
     for(size_t siz = FunTy->getNumParams(); i < siz; i++) {
-
         Value *Arg = codegenArg(Args[i], FunTy->getFunctionParamType(i));
         if(!Arg) {
             return nullptr;
@@ -747,7 +743,7 @@ Value *IRCodegenVisitor::codegenCallExpr(ast::Expression &Expr, Value *Alloca) {
         }
         ArgV.push_back(Arg);
     }
-
+    // Handle return type for array or struct types
     if((FunTy->getReturnType()->isArrayTy() || FunTy->getReturnType()->isStructTy()) && !Alloca) {
         AllocaInst *alloca = Builder.CreateAlloca(FunTy->getReturnType());
         Value *CallV = Builder.CreateCall(FunTy, V, ArgV);
@@ -924,7 +920,7 @@ Value *IRCodegenVisitor::codegenIndexExpr(ast::Expression &Expr) {
 
     std::vector<Value *>Indices;
     Type *VTy = nullptr;
-    if(LhsExpr->getTypeInfo()->Is(ast::Type::PointerTy)) {
+    if(LhsExpr->getTypeInfo()->isPointerTy()) {
         VTy = getTypeUsingStmtTypeInfo(Expr.getTypeInfo());
         Value *Idx = codeGenStmt(IdxExpr);
         if(!Idx) {
@@ -942,8 +938,7 @@ Value *IRCodegenVisitor::codegenIndexExpr(ast::Expression &Expr) {
             Idx = Builder.CreateSExt(Idx, I64);
         }
 
-        // Var = Builder.CreateLoad(Var->getType(), Var);
-        Var = LoadValue(IdxExpr, Var, Var->getType());
+        Var = LoadValue(LhsExpr, Var, Var->getType());
         if(!Var) {
             err::err_out(&Expr, "unable convert index expression to IR");
             return nullptr;
@@ -997,21 +992,21 @@ Value *IRCodegenVisitor::codeGenExtCall(ast::Expression &Expr) {
 
 Value *IRCodegenVisitor::codeGenExpression(ast::Expression *AstNode, Value *Alloca) {
     dumpir1("Expression");
-    switch (AstNode->ExprTy())
+    switch (AstNode->getExprID())
     {
-    case ast::KMemExpr:
+    case ast::Expression::KMemExpr:
         return codegenMemExpr(*AstNode);
-    case ast::KBinaryExpr:
+    case ast::Expression::KBinaryExpr:
         return codegenBinaryExpr(*AstNode);
-    case ast::KAsExpr:
+    case ast::Expression::KAsExpr:
         return codegenCastExpr(*AstNode);
-    case ast::KCallExpr:
+    case ast::Expression::KCallExpr:
         return codegenCallExpr(*AstNode, Alloca);
-    case ast::KExtCallExpr:
+    case ast::Expression::KExtCallExpr:
         return codeGenExtCall(*AstNode);
-    case ast::KIndexExpr:
+    case ast::Expression::KIndexExpr:
         return codegenIndexExpr(*AstNode);
-    case ast::KStructExpr:
+    case ast::Expression::KStructExpr:
         return codegenStructExpr(*AstNode, Alloca);
     default:
         break;

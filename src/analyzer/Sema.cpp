@@ -9,7 +9,7 @@ namespace ast {
 bool TypeChecker::Analyze(Ast *tree) {
     Module *ThisMod = tree->getStmtLoc()->getMod();
     for(auto &m: ThisMod->getSubMods()){
-        if(!Analyze(m.second->getTree())) {
+        if(!Analyze(m.second->getAst())) {
             return false;
         }
     }
@@ -89,11 +89,16 @@ bool TypeChecker::visit(Ast *AstNode, Ast **Base, Type *Ty) {
         if(_Ty->type() != TyForConst->type()){
             return true;
         }
-        if(AstNode->Is(NodeNumLit) || AstNode->Is(NodeNullLit) || AstNode->Is(NodeFloatLit) || (AstNode->Is(NodeStrLit) && _Ty->Is(Type::IntTy)))
+        if(AstNode->Is(NodeNumLit) || AstNode->Is(NodeNullLit) || AstNode->Is(NodeFloatLit) || (AstNode->Is(NodeStrLit) && _Ty->isIntTy()))
             AstNode->setType(TyForConst);
     }
     if(set) {
         TyForConst = oldType;
+    }
+
+    if(isConst && !isConstF && !(AstNode->IsConst() || AstNode->IsTydConst())){
+        err::err_out(AstNode, "element is not a compile-time constant");
+        return false;
     }
 
     if(isConst && !isConstF && (AstNode->Is(NodeExpr) || AstNode->Is(NodePrefix)) && (AstNode->IsConst() || AstNode->IsTydConst())) {

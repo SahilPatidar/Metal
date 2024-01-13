@@ -1,8 +1,8 @@
 #pragma once
-#include<map>
 #include<optional>
 #include"../parser/type.hpp"
 #include"Value.hpp"
+#include"../Core.hpp"
 
 // #include"parser/type.hpp"
 
@@ -17,27 +17,27 @@ struct AstNodeInfo {
 
 class StackVal{
 private:
-    std::map<std::string, AstNodeInfo>info;
+    Map<String, AstNodeInfo>info;
 public:
     StackVal() {}
     ~StackVal() {}
 
-    inline void add(std::string &n, Type *Ty, ast::VALUE *Val, Ast *Node) {
+    inline void add(String &n, Type *Ty, ast::VALUE *Val, Ast *Node) {
         info.insert({n, (AstNodeInfo){Ty, Val, Node}});
     }
-    inline AstNodeInfo* getAllInfo(const std::string &n)  { 
+    inline AstNodeInfo* getAllInfo(const String &n)  { 
         return info.find(n) == info.end()? 0: &info[n]; 
     }
     inline bool isempty() { return info.empty(); }
 
-    inline bool Has(const std::string &n) {
+    inline bool Has(const String &n) {
         return info.find(n) != info.end();
     }
 
-    inline Type* getTypeInfo(const std::string &n)  { 
+    inline Type* getTypeInfo(const String &n)  { 
         return info.find(n) == info.end()? 0: info[n].type; 
     }
-    inline ast::VALUE* getValInfo(const std::string &n)  { 
+    inline ast::VALUE* getValInfo(const String &n)  { 
         return info.find(n) == info.end()? 0: info[n].val; 
     }
 };
@@ -56,14 +56,14 @@ public:
 
     FunctionType *getFunc() const noexcept { return Func; }
     
-    inline void add(std::string &n, Type *Ty, VALUE *Val, Ast *Node) {
+    inline void add(String &n, Type *Ty, VALUE *Val, Ast *Node) {
         stack.back().add(n, Ty, Val, Node);
     }
     inline void pushStack() { stack.emplace_back(); }
     inline void popStack() { stack.pop_back(); }
     inline bool empty() { return stack.empty(); }
 
-    bool Has(const std::string &n, bool Top) {
+    bool Has(const String &n, bool Top) {
         ssize_t i = stack.size()-1;
         while(i >= 0) {
             if(stack[i].Has(n)){
@@ -77,7 +77,7 @@ public:
         return false;
     }
     void setFn(FunctionType *Fn) noexcept { Func = Fn;}
-    AstNodeInfo* getAll(const std::string &n, bool Top) {
+    AstNodeInfo* getAll(const String &n, bool Top) {
         ssize_t i = stack.size()-1;
         while(i >= 0) {
             AstNodeInfo *V = stack[i].getAllInfo(n);
@@ -119,7 +119,7 @@ public:
        return !funcstack.empty();
     }
     
-    bool addInfo(std::string n, Type *type, ast::VALUE *val, Ast *Node, bool global = false) {
+    bool addInfo(String n, Type *type, ast::VALUE *val, Ast *Node, bool global = false) {
         if(!global&&!funcstack.empty()) {
             funcstack.back().add(n, type, val, Node);
         }
@@ -130,14 +130,14 @@ public:
         return true;
     }
     
-    void updateGlobalInfo(std::string n, Type *type, ast::VALUE *val, Ast* Node) {
+    void updateGlobalInfo(String n, Type *type, ast::VALUE *val, Ast* Node) {
         globalDecl.add(n, type, val, Node);
     }
 
     inline FunctionType *getFuncBack() { return funcstack.back().getFunc(); }
     inline FuncStack getFuncTop() { return funcstack.back(); }
     
-    Type* getType(const std::string &n, bool Top = false) {
+    Type* getType(const String &n, bool Top = false) {
         if(!funcstack.empty()){
             Type *Ty = funcstack.back().getAll(n, Top)->type;
             if(Ty || Top){
@@ -147,9 +147,9 @@ public:
         return globalDecl.getAllInfo(n)->type;
     }
     
-    // Type* getGlobalFunc(std::string &n);
+    // Type* getGlobalFunc(String &n);
     
-    bool Has(const std::string &n, bool Top = false) {
+    bool Has(const String &n, bool Top = false) {
         if(!funcstack.empty()){
             if(funcstack.back().Has(n, Top)) {
                 return true;
@@ -161,7 +161,7 @@ public:
         return globalDecl.Has(n);
     }
 
-    ast::VALUE* getVal(std::string n, bool Top = false) {
+    ast::VALUE* getVal(String n, bool Top = false) {
         if(!funcstack.empty()){
             VALUE *val = funcstack.back().getAll(n, Top)->val;
             if(val || Top){
@@ -170,7 +170,7 @@ public:
         }
         return globalDecl.getAllInfo(n)->val;
     }
-    AstNodeInfo* getAllInfo(const std::string &n, bool Top = false) {
+    AstNodeInfo* getAllInfo(const String &n, bool Top = false) {
         if(!funcstack.empty()){
             AstNodeInfo *info = funcstack.back().getAll(n, Top);
             if(info || Top){

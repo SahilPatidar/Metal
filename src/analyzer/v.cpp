@@ -3,7 +3,7 @@
 #include"../../include/parser/type.hpp"
 #include "../../include/analyzer/Value.hpp"
 #include "../../include/Error.hpp"
-#define MAX_LOOP_LIMIT 100
+
 namespace ast
 {
 
@@ -153,14 +153,9 @@ namespace ast
 
     bool ValChecker::visit(StringLiteral *AstNode, Ast **Base)
     {
-        if (!AstNode->getValueInfo())
+        if (!AstNode->getValueInfo() && AstNode->ischar())
         {
-            std::vector<VALUE *> str;
-            for (auto &c : AstNode->getLexeme().getStr())
-            {
-                str.push_back(IntVal::Create(mgr, c));
-            }
-            AstNode->setValue(ArrayVal::Create(mgr, str));
+            AstNode->setValue(IntVal::Create(mgr, AstNode->getLexeme().getDataInt()));
         }
         return true;
     }
@@ -239,11 +234,11 @@ namespace ast
         }
         switch (AstNode->getOp().getTokType())
         {
-        case lex::STAR:
+        case STAR:
         break;
-        case lex::AND:
+        case AND:
         break;
-        case lex::MINUS:
+        case MINUS:
         {
             if (Val->getValTy() == VALUE::VInt)
             {
@@ -257,7 +252,7 @@ namespace ast
             }
         }
         break;
-        case lex::CND_NOT:
+        case CND_NOT:
         {
             if (Val->Is(VALUE::VInt))
             {
@@ -271,7 +266,7 @@ namespace ast
             }
         }
         break;
-        case lex::NOT:
+        case NOT:
         {
             if (Val->Is(VALUE::VInt))
             {
@@ -307,11 +302,11 @@ namespace ast
     {
         Ast *Lhs = AstNode->getLhs();
         Ast *Rhs = AstNode->getRhs();
-        switch (AstNode->ExprTy())
+        switch (AstNode->getExprID())
         {
-        case KMemExpr:
+        case Expression::KMemExpr:
         break;
-        case KBinaryExpr:
+        case Expression::KBinaryExpr:
         {
             if (!visit(Lhs, &Lhs)) {
                 return false;
@@ -512,9 +507,9 @@ namespace ast
             std::cout<<"here"<<std::endl;
         }
         break;
-        case KIndexExpr:
+        case Expression::KIndexExpr:
         break;
-        case KAsExpr:
+        case Expression::KAsExpr:
         {
             if(!visit(Lhs, &Lhs)) {
                 return false;
@@ -548,9 +543,9 @@ namespace ast
             }
         }
         break;
-        case KStructExpr:
+        case Expression::KStructExpr:
         break;
-        case KCallExpr:
+        case Expression::KCallExpr:
         break;
         default:
             return false;

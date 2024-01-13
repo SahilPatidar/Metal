@@ -25,12 +25,12 @@ bool IntVal::updateValue(VALUE *_val) {
     return true;
 }
 
-VALUE *IntVal::clone(ResourceMgr &mgr) noexcept {
+VALUE *IntVal::clone(Context &mgr) noexcept {
     return Create(mgr,val,vty);
 }
 
 
-IntVal *IntVal::Create(ResourceMgr &mgr, int64_t _val,  ValID vty) {
+IntVal *IntVal::Create(Context &mgr, int64_t _val,  ValID vty) {
     return mgr.CreateVal<IntVal>(_val, vty);
 }
 
@@ -61,11 +61,11 @@ bool FltVal::updateValue(VALUE *_val) {
 
 
 
-VALUE *FltVal::clone(ResourceMgr &mgr) noexcept {
+VALUE *FltVal::clone(Context &mgr) noexcept {
     return Create(mgr,val);
 }
 
-FltVal *FltVal::Create(ResourceMgr &mgr, double _val)  {
+FltVal *FltVal::Create(Context &mgr, long double _val)  {
     return mgr.CreateVal<FltVal>(_val);
 }
 
@@ -87,7 +87,7 @@ bool StructVal::updateValue(VALUE *_val) {
 }
 
 
-VALUE *StructVal::clone(ResourceMgr &mgr) noexcept {
+VALUE *StructVal::clone(Context &mgr) noexcept {
     std::map<std::string, VALUE *>stvals;
     for(auto &val: vals){
         stvals.insert({val.first, val.second->clone(mgr)});
@@ -96,7 +96,7 @@ VALUE *StructVal::clone(ResourceMgr &mgr) noexcept {
 }
 
 
-StructVal *StructVal::Create(ResourceMgr &mgr, const std::map<std::string, VALUE*> &_vals) {
+StructVal *StructVal::Create(Context &mgr, const std::map<std::string, VALUE*> &_vals) {
     return mgr.CreateVal<StructVal>(_vals);
 }
 
@@ -116,7 +116,7 @@ bool ArrayVal::updateValue(VALUE *_val) {
 }
 
 
-VALUE *ArrayVal::clone(ResourceMgr &mgr) noexcept {
+VALUE *ArrayVal::clone(Context &mgr) noexcept {
     std::vector<VALUE *>ArrVal;
     for(auto &val: vals){
         ArrVal.push_back(val->clone(mgr));
@@ -124,7 +124,7 @@ VALUE *ArrayVal::clone(ResourceMgr &mgr) noexcept {
     return Create(mgr, ArrVal);
 }
 
-ArrayVal *ArrayVal::Create(ResourceMgr &mgr, const std::vector<VALUE*>&_vals) {
+ArrayVal *ArrayVal::Create(Context &mgr, const std::vector<VALUE*>&_vals) {
     return mgr.CreateVal<ArrayVal>(_vals);
 }
 

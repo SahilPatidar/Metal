@@ -77,7 +77,7 @@ Constant *IRCodegenVisitor::codeGenConst(ast::Ast *AstNode) {
     case ast::NodeExpr:
     {
         Value *V = nullptr;
-        if(static_cast<ast::Expression *>(AstNode)->ExprTy() == ast::KStructExpr) 
+        if(static_cast<ast::Expression *>(AstNode)->isStructExpr()) 
             V = codeGenExpression(static_cast<ast::Expression *>(AstNode));
         if(!V) {
             break;
@@ -146,7 +146,7 @@ Value *IRCodegenVisitor::codeGenImportValue(ast::UseStmt *Imported) {
     ast::Ast *Import = Imported->getPath();
     
     if(Import->getStmtLoc()->getMod() != Imported->getStmtLoc()->getMod()) {
-        ast::BlockStmt *B = static_cast<ast::BlockStmt *>(Import->getStmtLoc()->getMod()->getTree());
+        ast::BlockStmt *B = static_cast<ast::BlockStmt *>(Import->getStmtLoc()->getMod()->getAst());
         for(auto &S: B->getStmts()) {
             if(!codeGenImportStmt(S)) {
                 return nullptr;
@@ -220,7 +220,7 @@ Value *IRCodegenVisitor::LoadValue(ast::Ast *Expr, Value *Val, Type *Ty) {
         return Val;
     }
 
-    if((Expr->Is(ast::NodePrefix) && static_cast<ast::PrefixExpr *>(Expr)->getOp().getTokType() == AND)) {
+    if((Expr->Is(ast::NodePrefix) && static_cast<ast::PrefixExpr *>(Expr)->getOp().getTokType() == ast::AND)) {
         return Val;
     }
     if(Expr->Is(ast::NodeStrLit)) {
@@ -231,33 +231,23 @@ Value *IRCodegenVisitor::LoadValue(ast::Ast *Expr, Value *Val, Type *Ty) {
         return Val;
     }
 
-    if(Ty->isPointerTy()) {
-        if(AllocaInst *A = dyn_cast<AllocaInst>(Val)) {
-            return Builder.CreateLoad(Ty, Val);
-        }else if(GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Val)) {
-            return Builder.CreateLoad(Ty, Val);
-        }else if(GlobalVariable *L = dyn_cast<GlobalVariable>(Val)) {
-            return Builder.CreateLoad(Ty, Val);
-        }else if(LoadInst *L = dyn_cast<LoadInst>(Val)) {
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Val)) {
+        // Check if the constant expression involves a runtime computation
+        if (CE->getOpcode() == Instruction::GetElementPtr) {
             return Builder.CreateLoad(Ty, Val);
         }
+        // Handle other types of constant expressions as needed
+    }
 
+    if(Ty->isPointerTy()) {
+        if(isa<AllocaInst>(Val) || isa<GetElementPtrInst>(Val) || isa<GlobalVariable>(Val) || isa<LoadInst>(Val)) {
+            return Builder.CreateLoad(Ty, Val);
+        }
     }
     else if(Val->getType()->isPointerTy()) {
-        if(AllocaInst *A = dyn_cast<AllocaInst>(Val)) {
-            return Builder.CreateLoad(Ty, Val);
-        }else if(CallInst *C = dyn_cast<CallInst>(Val)) {
-            return Val;
-        }else if(LoadInst *L = dyn_cast<LoadInst>(Val)) {
-            return Builder.CreateLoad(Ty, Val);
-        }else if(GlobalVariable *L = dyn_cast<GlobalVariable>(Val)) {
-            return Builder.CreateLoad(Ty, Val);
-        }else if(GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Val)) {
-            return Builder.CreateLoad(Ty, Val);
-        }else if(ConstantExpr *GEP = dyn_cast<ConstantExpr>(Val)) {
+        if(isa<AllocaInst>(Val) || isa<LoadInst>(Val) || isa<GlobalVariable>(Val) || isa<GetElementPtrInst>(Val) || isa<ConstantExpr>(Val)) {
             return Builder.CreateLoad(Ty, Val);
         }
-
     }
 
     dumpir2(__func__);
@@ -267,13 +257,10 @@ Value *IRCodegenVisitor::LoadValue(ast::Ast *Expr, Value *Val, Type *Ty) {
 
 Type *IRCodegenVisitor::getType(Value *Val, ast::Ast *Expr) {
     dumpir1(__func__);
-    if((Expr->Is(ast::NodePrefix) && static_cast<ast::PrefixExpr *>(Expr)->getOp().getTokType() == AND)) {
+    if((Expr->Is(ast::NodePrefix) && static_cast<ast::PrefixExpr *>(Expr)->getOp().getTokType() == ast::AND)) {
         return Val->getType();
     }
-    // if(AllocaInst *A = dyn_cast<AllocaInst>(Val)) {
-    //     return A->getAllocatedType();
-    // }
-
+    
     if(Val->getType()->isPointerTy())
         return getTypeUsingStmtTypeInfo(Expr->getTypeInfo());
     dumpir2(__func__);

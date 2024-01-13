@@ -118,7 +118,7 @@ Value *IRCodegenVisitor::codeGenVarStmt(ast::VarStmt *AstNode) {
     }
 
     if(!Ty) {
-        err::err_out(AstNode, "unable to contvert var stmt type to ir");
+        err::err_out(AstNode, "Failed to generate IR");
         return nullptr;
     }
 
@@ -128,7 +128,6 @@ Value *IRCodegenVisitor::codeGenVarStmt(ast::VarStmt *AstNode) {
         if(StmtVal) {
             V = codeGenConst(StmtVal);
             if(!V) {
-                err::err_out(AstNode, "unable to contvert var stmt val to ir");
                 return nullptr;
             }
         }
@@ -147,13 +146,12 @@ Value *IRCodegenVisitor::codeGenVarStmt(ast::VarStmt *AstNode) {
 
     Var = CreateEntryBlockAlloca(Builder.GetInsertBlock()->getParent(), Ty);
     if(!Var){
-        err::err_out(AstNode, "unable to contvert var stmt to ir");
+        err::err_out(AstNode, "Failed to generate IR");
         return nullptr;
     }
     if(StmtVal) {
         Val = codeGenStmt(StmtVal, Var);
         if(!Val) {
-            err::err_out(AstNode, "unable to contvert var stmt val to ir");
             return nullptr;
         }
     }
@@ -161,8 +159,6 @@ Value *IRCodegenVisitor::codeGenVarStmt(ast::VarStmt *AstNode) {
     ResMgr.addInfo(VarN, Var, !ResMgr.HasFunc());
     if(StmtVal && (Var != Val))
         return StoreValue(LoadValue(StmtVal, Val, Ty), Var, Ty, getType(Val, StmtVal));
-    // if(StmtVal && !StmtVal->Is(ast::NodeField) && !(StmtVal->Is(ast::NodeExpr) && static_cast<ast::Expression *>(StmtVal)->ExprTy() == ast::KStructExpr))
-    //     return StoreValue(LoadValue(StmtVal, Val, Ty), Var, Ty, getType(Val, StmtVal));
     dumpir2(__func__);
     return Var;
 }
@@ -200,7 +196,7 @@ Value *IRCodegenVisitor::codeGenReturnStmt(ast::ReturnStmt *AstNode) {
     if(AstNode->getRetValue()){
         Value *RetVal = codeGenStmt(AstNode->getRetValue());
         if(!RetVal) {
-            err::err_out(AstNode, "unable convert return value to IR");
+            err::err_out(AstNode, "Failed to generate IR");
             return nullptr;
         }
         return Builder.CreateRet(LoadValue(AstNode->getRetValue(), RetVal, Builder.GetInsertBlock()->getParent()->getReturnType()));
@@ -211,7 +207,7 @@ Value *IRCodegenVisitor::codeGenReturnStmt(ast::ReturnStmt *AstNode) {
 
 Value *IRCodegenVisitor::codeGenBranchStmt(ast::BranchStmt *AstNode) {
     dumpir1("BranchStmt");
-    if(AstNode->getLexeme().getTokTy() == lex::BREAK)
+    if(AstNode->getLexeme().getTokTy() == ast::BREAK)
         return Builder.CreateBr(LoopEnd.back());
     return Builder.CreateBr(LoopBagin.back());
 }
@@ -224,7 +220,7 @@ Value *IRCodegenVisitor::codegenCondExpr(ast::Ast *Expr, BasicBlock *BB1, BasicB
     dropFalseBB();
     dropTrueBB();
     if(!Cond) {
-        err::err_out(Expr, "failed to convert conditional expression to IR");
+        err::err_out(Expr, "Failed to generate IR");
         return nullptr;
     }
     if(Cond->getValueID() == 30) {
@@ -265,7 +261,6 @@ Value *IRCodegenVisitor::codeGenIfStmt(ast::IfStmt *AstNode) {
     
     Value *ThenVal = codeGenBlockStmt(AstNode->getIfBlock(), EndBlock);
     if(!ThenVal) {
-        err::err_out(AstNode, "unable convert then val to IR");
         return nullptr;
     }
 
@@ -282,7 +277,6 @@ Value *IRCodegenVisitor::codeGenIfStmt(ast::IfStmt *AstNode) {
             Builder.CreateBr(EndBlock);
         }
         if(!ElseVal) {
-            err::err_out(AstNode, "unable convert else val to IR");
             return nullptr;
         }
         FalseBlock = Builder.GetInsertBlock();
@@ -301,10 +295,6 @@ Value *IRCodegenVisitor::codeGenIfStmt(ast::IfStmt *AstNode) {
     }
 
     PHINode *PHI = Builder.CreatePHI(ThenVal->getType(), ElseVal?2:1, "iftmp");
-    if(!PHI) {
-        err::err_out(AstNode, "unable to convert if stmt to ir");
-        return nullptr;
-    }
     PHI->addIncoming(ThenVal, TrueBlock);
     if(ElseVal)
         PHI->addIncoming(ElseVal, FalseBlock);
@@ -324,7 +314,6 @@ Value *IRCodegenVisitor::codeGenForLoop(ast::ForLoop *AstNode) {
     if(AstNode->getVar()) {
         Value *Init = codeGenStmt(AstNode->getVar());
         if(!Init) {
-            err::err_out(AstNode, "unable convert var to IR");
             return nullptr;
         }
     }
@@ -351,7 +340,7 @@ Value *IRCodegenVisitor::codeGenForLoop(ast::ForLoop *AstNode) {
         for(auto &Expr: AstNode->getBlock()->getStmts()) {
             Value *Val = codeGenStmt(Expr);
             if(!Val) {
-                err::err_out(AstNode, "unable convert loop body to IR");
+                err::err_out(AstNode, "Failed to generate IR");
                 return nullptr;
             }
             if(Expr->Is(ast::NodeBranchStm) || Expr->Is(ast::NodeRetStm)) {
@@ -363,7 +352,6 @@ Value *IRCodegenVisitor::codeGenForLoop(ast::ForLoop *AstNode) {
     if(AstNode->getIncr()) {
         Value *Incr = codeGenStmt(AstNode->getIncr());
         if(!Incr) {
-            err::err_out(AstNode, "unable convert incr to IR");
             return nullptr;
         }
     }
@@ -382,7 +370,6 @@ Value *IRCodegenVisitor::codeGenMethod(ast::Method *AstNode) {
     ResMgr.Push_Stack();
     Type *Ty = codeGenTy(AstNode->getName());
     if(!Ty || !Ty->isStructTy()) {
-        err::err_out(AstNode, "unable convert to IR");
         return nullptr;
     }
     
@@ -391,7 +378,6 @@ Value *IRCodegenVisitor::codeGenMethod(ast::Method *AstNode) {
     for(auto &Impl: MT) {
         Value *FnVal = codeGenStmt(Impl);
         if(!FnVal){
-            err::err_out(AstNode, "unable convert to IR");
             return nullptr;
         }
     }
@@ -401,25 +387,6 @@ Value *IRCodegenVisitor::codeGenMethod(ast::Method *AstNode) {
 
 Value *IRCodegenVisitor::codeGenEnumExpr(ast::EnumExpr *AstNode) {
     dumpir1("EnumExpr");
-    std::vector<ast::VarStmt *>&Vars = AstNode->getEVals();
-    for(auto &Var :Vars) {
-        std::string VarN = Var->getVar().getStr();
-        Type* Ty = codeGenTy(Var->getType());
-        Value *V = codeGenStmt(Var->getVal());
-        if(!V) {
-            err::err_out(AstNode, "unable convert to IR");
-            return nullptr;
-        }
-        Constant * Val = static_cast<Constant *>(V);
-        GlobalVariable *GVar = new GlobalVariable(
-                                    TheModule, 
-                                    Ty, 
-                                    true, 
-                                    GlobalValue::ExternalLinkage, 
-                                    Val, 
-                                    VarN);
-        ResMgr.addInfo(VarN, V, !ResMgr.HasFunc());
-    }
     return Constant::getNullValue(Type::getInt32Ty(Context));
 }
 
@@ -440,26 +407,18 @@ Value *IRCodegenVisitor::codeGenWhileLoop(ast::WhileLoop *AstNode) {
     if(!Cond){
         return nullptr;
     }
-    // Builder.CreateCondBr(Cond, LoopBlock, EndBlock);
 
-    ///Loop block
     LoopBagin.push_back(CondBlock); 
     LoopEnd.push_back(EndBlock); 
     TheFunction->insert(TheFunction->end(), LoopBlock);
     Builder.SetInsertPoint(LoopBlock);
-    // Value *blk = nullptr;             
+     
     Value *blk = codeGenBlockStmt(AstNode->getBlock(), CondBlock);             
-    // auto &Stmts = AstNode->getBlock()->getStmts();
-    // for(auto &E: Stmts) {
-    //     blk = codeGenStmt(E);
-        if(!blk) {
-            err::err_out(AstNode, "unable convert to IR");
-            return nullptr;
-        } 
-    // }
 
-    // LoopBlock = Builder.GetInsertBlock();
-    // Builder.CreateBr(CondBlock);
+    if(!blk) {
+        err::err_out(AstNode, "Failed to generate IR");
+        return nullptr;
+    } 
 
     LoopBagin.pop_back(); 
     LoopEnd.pop_back(); 

@@ -8,10 +8,10 @@
 
 namespace ast{
 
-void dumpresolve(std::string msg){
+void dumpresolve(String msg){
     std::cout<<"step :: "<<"entering in -> "<<msg<<" "<<std::endl;
 }
-void dumpresolve2(std::string msg){
+void dumpresolve2(String msg){
     std::cout<<"step :: "<<"returning from -> "<<msg<<" "<<std::endl;
 }
 
@@ -83,7 +83,7 @@ bool Resolve::visit(Ast *AstNode, Ast **Base, Valid Is) {
         }
         return true;
     }
-    if((Is == Val) && AstNode->Is(NodeIdent) && (!AstNode->getDecl() || (AstNode->getDecl() && !AstNode->getDecl()->Is(NodeVarStm)))) {
+    if((Is == Val) && AstNode->Is(NodeIdent) && !AstNode->getDecl()) {
         err::err_out(AstNode, "invalid value");
         return false;
     }
@@ -95,66 +95,6 @@ bool Resolve::visit(Ast *AstNode, Ast **Base, Valid Is) {
     return true;
 }
 
-bool Resolve::visitTy(Ast *AstNode, Ast **Base) {
-    dumpresolve("Ast");
-    // ThisModule = AstNode->getStmtLoc()->getMod();
-    switch(AstNode->getStmtTy())
-    {
-    case NodeIdent:     if(!visit(static_cast<Identifier *>(AstNode), Base)){return false;} break;
-    case NodeExpr:      if(!visit(static_cast<Expression *>(AstNode), Base)){return false;} break;
-    case NodePrefix:    if(!visit(static_cast<PrefixExpr *>(AstNode), Base)){return false;} break;
-    case NodeGroupExpr: if(!visit(static_cast<GroupedExpr *>(AstNode), Base)){return false;} break;
-
-    case NodePreDefTy:  if(!visit(static_cast<PremitiveType *>(AstNode), Base)){return false;} break;
-    case NodeArray:     if(!visit(static_cast<Array *>(AstNode), Base)){return false;} break;
-    case NodeFnTy:      if(!visit(static_cast<FnType *>(AstNode), Base)){return false;} break;
-    case NodeUserDefTy: if(!visit(static_cast<UserDefinedTy *>(AstNode), Base)){return false;} break;
-    case NodeVoid:      if(!visit(static_cast<Void *>(AstNode), Base)){return false;} break;
-    default:
-        return false;
-        break;
-    }
-    if(AstNode != *Base) {
-        AstNode = *Base;
-    }
-
-    if(!IsTy(AstNode)) {
-        err::err_out(AstNode, "invalid type");
-        return false;
-    }
-    dumpresolve2("Ast");
-    return true;
-}
-
-bool Resolve::visitVal(Ast *AstNode, Ast **Base) {
-    dumpresolve("Ast");
-    // ThisModule = AstNode->getStmtLoc()->getMod();
-    switch(AstNode->getStmtTy())
-    {
-    case NodeNumLit: if(!visit(static_cast<NumericLiteral *>(AstNode), Base)){return false;} break;
-    case NodeBoolLit: if(!visit(static_cast<BoolLiteral *>(AstNode), Base)){return false;} break;
-    case NodeFloatLit: if(!visit(static_cast<FloatLiteral *>(AstNode), Base)){return false;} break;
-    case NodeStrLit: if(!visit(static_cast<StringLiteral *>(AstNode), Base)){return false;} break;
-    case NodeNullLit: if(!visit(static_cast<NullLiteral *>(AstNode), Base)){return false;} break;
-    case NodeIdent: if(!visit(static_cast<Identifier *>(AstNode), Base)){return false;} break;
-    case NodeExpr: if(!visit(static_cast<Expression *>(AstNode), Base)){return false;} break;
-    case NodeField: if(!visit(static_cast<FieldExpr *>(AstNode), Base)){return false;} break;
-    case NodeGroupExpr: if(!visit(static_cast<GroupedExpr *>(AstNode), Base)){return false;} break;
-    default:
-        return false;
-        break;
-    }
-    if(AstNode != *Base) {
-        AstNode = *Base;
-    }
-
-    if(IsTy(AstNode) && (AstNode->Is(NodeIdent) && (!AstNode->getDecl() || (AstNode->getDecl() && !AstNode->getDecl()->Is(NodeVarStm))))) {
-        err::err_out(AstNode, "invalid value");
-        return false;
-    }
-    dumpresolve2("Ast");
-    return true;
-}
 
 bool Resolve::visit(BranchStmt *AstNode, Ast** Base) {
     dumpresolve("BranchStmt");
@@ -192,10 +132,10 @@ bool Resolve::visit(DelStmt *AstNode, Ast** Base) {
 }
 
 
-Ast *Resolve::getModItem(Module *mod, std::string ID) {
-    std::vector<Ast *> &Stmts = static_cast<BlockStmt *>(mod->getTree())->getStmts();
+Ast *Resolve::getModItem(Module *mod, String ID) {
+    Vec<Ast *> &Stmts = static_cast<BlockStmt *>(mod->getAst())->getStmts();
     for(Ast *&S :Stmts) {
-        std::string stmtId = "";
+        String stmtId = "";
         switch(S->getStmtTy()) {
         case NodeStructStm: stmtId = static_cast<StructStmt *>(S)->getName().getStr(); break;
         case NodeFNStm: stmtId = static_cast<FunctionDef *>(S)->getFnProto()->getFuncName().getStr(); break;
@@ -224,7 +164,7 @@ Ast *Resolve::getModItem(Module *mod, std::string ID) {
 
 bool Resolve::visit(Identifier *AstNode, Ast **Base) {
     dumpresolve("Identifier");
-    std::string Id = AstNode->getLexeme().getStr();
+    String Id = AstNode->getLexeme().getStr();
     const StmtLoc *Loc = AstNode->getStmtLoc();
     bool found = false;
     if(STable.Has(Id)){
@@ -279,7 +219,7 @@ bool Resolve::visit(PremitiveType  *AstNode, Ast **Base) {
 
 bool Resolve::visit(FnType  *AstNode, Ast **Base) {
     dumpresolve("FnType");
-    std::vector<Type*>pTy;
+    Vec<Type*>pTy;
     if(!AstNode->getParamType().empty()) {
         for(auto &P :AstNode->getParamType()) {
             if(!visit(P, &P, Valid::Ty)){
@@ -300,9 +240,9 @@ bool Resolve::visit(FnType  *AstNode, Ast **Base) {
 
 bool Resolve::visit(StructStmt *AstNode, Ast **Base) {
     dumpresolve("StructStmt");
-    std::string name = AstNode->getName().getStr();
+    String name = AstNode->getName().getStr();
 
-    if(STable.Has(name)) {
+    if(STable.Has(name, STable.HasFunc())) {
         err::err_out(AstNode, "the name `", name , "` is defined multiple times");
         return false;
     }
@@ -311,7 +251,7 @@ bool Resolve::visit(StructStmt *AstNode, Ast **Base) {
     STable.addInfo(name, AstNode, !STable.HasFunc());
     STable.Push_Func();
     STable.addInfo("Self", AstNode, false);
-    std::vector<VarStmt *>&vars = AstNode->getfield();
+    Vec<VarStmt *>&vars = AstNode->getfield();
     for(size_t i = 0, siz = vars.size(); i < siz; i++) {
         if(!visit(vars[i]->getType(), &vars[i]->getType(), Valid::Ty)){
             err::err_out(vars[i], "failed to determined type of " , vars[i]->getVar().getStr());
@@ -326,16 +266,16 @@ bool Resolve::visit(StructStmt *AstNode, Ast **Base) {
 
 bool Resolve::visit(EnumExpr *AstNode, Ast **Base) {
     dumpresolve("EnumExpr");
-    std::string name = AstNode->getName().getStr();
+    String name = AstNode->getName().getStr();
     if(STable.Has(name)) {
         err::err_out(AstNode, "the name `", name , "` is defined multiple times");
         return false;
     }
     int64_t Eval = 0;
-    std::vector<VarStmt *>&Vals = AstNode->getEVals();
+    Vec<VarStmt *>&Vals = AstNode->getEVals();
     STable.Push_Func();
     for(auto &V :Vals) {
-        std::string EName = V->getVar().getStr();
+        String EName = V->getVar().getStr();
         Ast *&val = V->getVal();
         
         if(STable.Has(EName)) {
@@ -361,7 +301,7 @@ bool Resolve::visit(EnumExpr *AstNode, Ast **Base) {
 
 bool Resolve::visit(FunctionProto *FnProto, Ast **Base) {
     dumpresolve("FunctionDef");
-    std::string name = FnProto->getFuncName().getStr();
+    String name = FnProto->getFuncName().getStr();
     if(STable.Has(name)){
         err::err_out(FnProto, "the name `", name , "` is defined multiple times");
         return false;
@@ -374,13 +314,13 @@ bool Resolve::visit(FunctionProto *FnProto, Ast **Base) {
         return false;
     }
 
-    // std::map<std::string, Type*>ElementType;
-    std::vector<Type*>ElementType;
+    // std::map<String, Type*>ElementType;
+    Vec<Type*>ElementType;
     if(!FnProto->getParameter().empty()){
-        std::vector<VarStmt*>&param = FnProto->getParameter();
+        Vec<VarStmt*>&param = FnProto->getParameter();
         for(size_t i = 0, size = param.size(); i < size; i++) {
             Ast *&PVarTy = param[i]->getType();
-            std::string ParamName = param[i]->getVar().getStr();
+            String ParamName = param[i]->getVar().getStr();
 
             if(!PVarTy) {
                 err::err_out(param[i], "invalid function expression" , ParamName);
@@ -408,8 +348,8 @@ bool Resolve::visit(FunctionProto *FnProto, Ast **Base) {
 bool Resolve::visit(FunctionDef *FnStmt, Ast **Base) {
     dumpresolve("FunctionDef");
     FunctionProto *FnProto = FnStmt->getFnProto();
-    std::string name = FnProto->getFuncName().getStr();
-    if(STable.Has(name)){
+    String name = FnProto->getFuncName().getStr();
+    if(STable.Has(name, STable.HasFunc())){
         err::err_out(FnProto, "the name `", name , "` is defined multiple times");
         return false;
     }
@@ -421,13 +361,13 @@ bool Resolve::visit(FunctionDef *FnStmt, Ast **Base) {
         return false;
     }
 
-    // std::map<std::string, Type*>ElementType;
-    std::vector<Type*>ElementType;
+    // std::map<String, Type*>ElementType;
+    Vec<Type*>ElementType;
     if(!FnProto->getParameter().empty()){
-        std::vector<VarStmt*>&param = FnProto->getParameter();
+        Vec<VarStmt*>&param = FnProto->getParameter();
         for(size_t i = 0, size = param.size(); i < size; i++) {
             Ast *&PVarTy = param[i]->getType();
-            std::string ParamName = param[i]->getVar().getStr();
+            String ParamName = param[i]->getVar().getStr();
 
             if(!PVarTy) {
                 err::err_out(param[i], "invalid function expression" , ParamName);
@@ -510,19 +450,19 @@ bool Resolve::visit(Method *AstNode, Ast **Base) {
     static_cast<StructStmt *>(MTy->getDecl())->setImpl(AstNode);
 
     STable.Push_Func();
-    std::vector<Ast*> &impls = AstNode->getImpl();
+    Vec<Ast*> &impls = AstNode->getImpl();
     STable.addInfo("Self", MTy->getDecl(), false);
     
     for(size_t i = 0, siz = impls.size(); i < siz; i++) {
         Type *fnty = nullptr;
         FunctionDef *FnStmt = static_cast<FunctionDef *>(impls[i]);
         FunctionProto *FnProto = FnStmt->getFnProto();
-        if(STable.Has(FnProto->getFuncName().getStr())) {
-            err::err_out(FnProto, "redefination of function with name ", FnProto->getFuncName().getStr());
+        if(STable.Has(FnProto->getFuncName().getStr(), true)) {
+            err::err_out(FnProto, "redefination of function name ", FnProto->getFuncName().getStr());
             return false;
         }
 
-        std::vector<VarStmt*> &args = FnProto->getParameter();
+        Vec<VarStmt*> &args = FnProto->getParameter();
 
         if(!args.empty() && args[0]->getVar().getTokTy() == SELF) {
             Ast *Ty = nullptr;
@@ -553,7 +493,7 @@ bool Resolve::visit(Method *AstNode, Ast **Base) {
 bool Resolve::resolve(Ast **AstNode) {
     dumpresolve("resolve");
     ThisModule = (*AstNode)->getStmtLoc()->getMod();
-    const std::map<std::string, Module*> &submods = ThisModule->getSubMods();
+    const std::map<String, Module*> &submods = ThisModule->getSubMods();
     for(auto &m : submods) {
         std::cout<<m.first<<std::endl;
         Mods.insert({m.first, m.second}); 
@@ -575,7 +515,7 @@ bool Resolve::resolve(Ast **AstNode) {
 bool Resolve::visit(BlockStmt *AstNode, Ast **Base) {
     dumpresolve("BlockStmt");
     STable.Push_Stack();
-    std::vector<Ast*> &stmts = AstNode->getStmts();
+    Vec<Ast*> &stmts = AstNode->getStmts();
 
     for(size_t i = 0, siz = stmts.size(); i < siz; i++) {
         if(!visit(stmts[i], &stmts[i])){
@@ -584,7 +524,7 @@ bool Resolve::visit(BlockStmt *AstNode, Ast **Base) {
 
         if(stmts[i]->getStmtTy() == NodeBlockStm) {
 			BlockStmt *blk		 = static_cast<BlockStmt*>(stmts[i]);
-			std::vector<Ast*>&blkstmts = blk->getStmts();
+			Vec<Ast*>&blkstmts = blk->getStmts();
 			stmts.erase(stmts.begin() + i);
 			stmts.insert(stmts.begin() + i, blkstmts.begin(), blkstmts.end());
 			i += blkstmts.size();
@@ -603,8 +543,8 @@ bool Resolve::visit(UseStmt *AstNode, Ast **Base){
     dumpresolve("UseStmt");
     Ast *&Path = AstNode->getPath();
     Ast *IDN = nullptr;
-    if(Path->Is(NodeExpr) && static_cast<Expression *>(Path)->ExprTy() == KAsExpr) {
-        Expression *Expr = static_cast<Expression *>(Path);
+    if(Path->Is(NodeExpr) && as<Expression>(Path)->isCastExpr()) {
+        Expression *Expr = as<Expression>(Path);
         Path = Expr->getLhs();
         IDN = Expr->getRhs();
         if(Mods.find(IDN->toString()) != Mods.end()) {
@@ -715,7 +655,7 @@ bool Resolve::visit(FieldExpr  *AstNode, Ast **Base) {
 
 bool Resolve::visit(VarStmt *AstNode, Ast **Base) {
     dumpresolve("VarStmt");
-    std::string varn = AstNode->getVar().getStr();
+    String varn = AstNode->getVar().getStr();
 
     if(STable.Has(varn, STable.HasFunc())){
         err::err_out(AstNode, "the name `", varn , "` is defined multiple times");
@@ -759,16 +699,15 @@ bool Resolve::visit(Expression *AstNode, Ast **Base) {
     dumpresolve("Expression");
     Ast *&Lhs = AstNode->getLhs();
     Ast *&Rhs = AstNode->getRhs();
-    KExpr ExprTy = AstNode->ExprTy(); 
-    if(ExprTy != KExtCallExpr && !visit(Lhs, &Lhs)){
-        err::err_out(AstNode, "failed to due to previous error");
+
+    if(!AstNode->isExtCallExpr() && !visit(Lhs, &Lhs)){
         return false;
     }
-    switch (ExprTy)
+    switch (AstNode->getExprID())
     {
-    case KMemExpr: break;
-    case KBinaryExpr:
-    case KIndexExpr:
+    case Expression::KMemExpr: break;
+    case Expression::KBinaryExpr:
+    case Expression::KIndexExpr:
     {
         if(!visit(Rhs, &Rhs, Valid::Val)){
             err::err_out(AstNode, "failed to due to previous error");
@@ -776,8 +715,8 @@ bool Resolve::visit(Expression *AstNode, Ast **Base) {
         }
     }
         break;
-    case KAsExpr:
-    case KIsExpr:
+    case Expression::KAsExpr:
+    case Expression::KIsExpr:
     {
         if(!visit(Rhs, &Rhs, Valid::Ty)){
             err::err_out(AstNode, "failed to due to previous error");
@@ -785,12 +724,12 @@ bool Resolve::visit(Expression *AstNode, Ast **Base) {
         }
     }
         break;
-    case KPathExpr:
+    case Expression::KPathExpr:
     {
         Module *Mod = Lhs->getStmtLoc()->getMod();
         const StmtLoc *Loc = Rhs->getStmtLoc();
         if(Mod->getModId() != Loc->getMod()->getModId()) {
-            std::string Id = Rhs->toString();
+            String Id = Rhs->toString();
             Module *SMod = Mod->getSubMod(Id);
             Ast *Mitem = getModItem(Mod, Id);
 
@@ -812,14 +751,14 @@ bool Resolve::visit(Expression *AstNode, Ast **Base) {
         }
     }
     break;
-    case KCallExpr:
+    case Expression::KCallExpr:
     {
         if(Rhs->getStmtTy() != NodeField){
             err::err_out(AstNode, "unable to resolve");
             return false;
         }
         FieldExpr *field = static_cast<FieldExpr*>(Rhs);
-        std::vector<Ast*>&Vals = field->getArgs();
+        Vec<Ast*>&Vals = field->getArgs();
         if(!Vals.empty()){
             for(auto &V :Vals) {
                 if(!visit(V, &V, Valid::Val)){
@@ -829,14 +768,14 @@ bool Resolve::visit(Expression *AstNode, Ast **Base) {
         }
     }
     break;
-    case KExtCallExpr:
+    case Expression::KExtCallExpr:
     {
         if(Rhs->getStmtTy() != NodeField){
             err::err_out(AstNode, "unable to resolve");
             return false;
         }
         FieldExpr *field = static_cast<FieldExpr*>(Rhs);
-        std::vector<Ast*>&Vals = field->getArgs();
+        Vec<Ast*>&Vals = field->getArgs();
         if(!Vals.empty()){
             for(auto &V :Vals) {
                 if(!visit(V, &V)){
@@ -846,11 +785,11 @@ bool Resolve::visit(Expression *AstNode, Ast **Base) {
         }
     }
     break;
-    case KStructExpr:
+    case Expression::KStructExpr:
     {
         STable.Push_Stack();
         FieldExpr *field = static_cast<FieldExpr*>(Rhs);
-        std::vector<Ast*>&Vals = field->getArgs();
+        Vec<Ast*>&Vals = field->getArgs();
         if(!Vals.empty()){
             for(auto &V: Vals) {
                 Ast *&Val = static_cast<VarStmt*>(V)->getVal();
@@ -950,7 +889,7 @@ bool Resolve::visit(IfStmt  *AstNode, Ast **Base) {
 
 bool Resolve::visit(Extern *AstNode, Ast **Base) {
     Lexeme &L = AstNode->getID();
-    std::string Id = L.getStr();
+    String Id = L.getStr();
     if(STable.Has(Id)) {
         err::err_out(L.getLoc(), L.getStr() , " is already exist in scope");
         return false;

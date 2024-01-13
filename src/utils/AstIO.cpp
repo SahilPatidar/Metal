@@ -1,33 +1,44 @@
-#include<iostream>
-#include"../../include/utils/AstIO.hpp"
+#include<AstIO.hpp>
 
-namespace astio{
+#include <iostream>
 
-static int& tab() {
-    static int t = 0;
-    return t;
+namespace ast
+{
+namespace tio
+{
+static Vec<bool> &_tab()
+{
+	static Vec<bool> tabs;
+	return tabs;
 }
 
-static void tab_apply() {
-    for(int i = 0; i < tab(); i++){
-        std::cout<<"    ";
-    }
+static void _tab_apply(bool has_next)
+{
+	for(size_t i = 0; i < _tab().size(); ++i) {
+		if(i == _tab().size() - 1) {
+			std::cout << (has_next ? " ├─" : " └─");
+		} else {
+			std::cout << (_tab()[i] ? " │" : "  ");
+		}
+	}
 }
 
-void tabin() {
-    tab()++;
+void taba(bool show) { _tab().push_back(show); }
+
+void tabr(size_t num)
+{
+	if(num > _tab().size()) return;
+	for(size_t i = 0; i < num; ++i) _tab().pop_back();
 }
 
-void tabbr() {
-    tab() = 0;
+void print(bool has_next, InitList<StringRef> data)
+{
+	_tab_apply(has_next);
+	for(auto &d : data) std::cout << d;
 }
-
-void display(){
-    tab_apply();
-
+void printf(InitList<StringRef> data)
+{
+	for(auto &d : data) std::cout << d;
 }
-
-
-
-
-}
+} // namespace tio
+} // namespace sc

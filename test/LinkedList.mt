@@ -1,12 +1,12 @@
-/*
+
 use printf;
 use free;
-use malloc;*/
-
+use malloc;
+/*
 extern fn malloc;
 extern fn printf;
 extern fn free;
-
+*/
 struct LinkedList {
     data i32,
     next *mut LinkedList
@@ -123,8 +123,7 @@ interface LinkedList {
     }
 }
 
-
-
+/*
 fn main() -> i32{
     let mut q = LinkedList::new_list(0);
     for i in 0..100 {
@@ -137,3 +136,4 @@ fn main() -> i32{
     }
     return 0;
 }
+*/

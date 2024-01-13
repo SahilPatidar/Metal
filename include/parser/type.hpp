@@ -7,12 +7,12 @@
 
 namespace ast{
 
-class ResourceMgr;
+class Context;
 class StructStmt;
 
-template<typename T, typename S> 
-inline T *as(S *Var) {
-    return static_cast<T *>(Var);
+template<typename To, typename From> 
+inline To *as(From *Var) {
+    return static_cast<To *>(Var);
 }
 
 class Type{
@@ -35,7 +35,7 @@ public:
     };
 
 #define IsTyX(Ty, ETy) \
-    bool is##Ty() { return KTy == ETy; }
+    inline bool is##Ty() const noexcept { return KTy == ETy; }
 
 IsTyX(IntTy, IntTy)
 IsTyX(FltTy, FltTy)
@@ -54,7 +54,7 @@ IsTyX(VoidTy, VoidTy)
  }
  
  virtual ~Type() = default;
- virtual bool UnaryOpMatch(lex::Tok op) { return false; }
+ virtual bool UnaryOpMatch(Tok op) { return false; }
  virtual bool IsCloneOf(Type *To) { return false; }
  virtual bool IsCasteble(Type *To) = 0;
  inline uintptr_t getuId() const noexcept { return uId; }
@@ -85,7 +85,7 @@ IsTyX(VoidTy, VoidTy)
 //         }
 //     }
 //     inline Type *getTy() const noexcept { return Ty; }
-//     bool UnaryOpMatch(lex::Tok op);
+//     bool UnaryOpMatch(Tok op);
 //     bool IsCloneOf(Type *To);
 //     bool IsCasteble(Type *To);
 //     std::string toStr() noexcept;
@@ -105,9 +105,9 @@ public:
     bool isSignInt() const noexcept {return isSign;}
     int getbit() const noexcept {return bit;}    
     bool IsIntWidth(uint16_t _bit) const noexcept {return _bit == bit;}    
-    bool UnaryOpMatch(lex::Tok op);
+    bool UnaryOpMatch(Tok op);
     std::string toStr() noexcept;
-    static IntType *Create(ResourceMgr &mgr, uint16_t _bit, bool _isSign);
+    static IntType *Create(Context &mgr, uint16_t _bit, bool _isSign);
 };
 
 
@@ -123,8 +123,8 @@ public:
 //     std::vector<Type*>getArgs() const { return args; }
 //     bool IsCloneOf(Type *To);
 
-//     bool UnaryOpMatch(lex::Tok op);
-//     static AnyType *Create(ResourceMgr &mgr, std::vector<Type*>&args);
+//     bool UnaryOpMatch(Tok op);
+//     static AnyType *Create(Context &mgr, std::vector<Type*>&args);
 // };
 
 
@@ -140,10 +140,10 @@ public:
     bool IsCasteble(Type *To);
     bool IsCloneOf(Type *To);
     int getbit() const {return bit;}
-    bool UnaryOpMatch(lex::Tok op);
+    bool UnaryOpMatch(Tok op);
     std::string toStr() noexcept;
 
-    static FloatType *Create(ResourceMgr &mgr, uint16_t _bit);
+    static FloatType *Create(Context &mgr, uint16_t _bit);
 };
 
 
@@ -155,13 +155,13 @@ public:
     :Type(TypeID::EnumTy), Ty(_ITy) {}
     ~EnumType() {}
 
-    bool UnaryOpMatch(lex::Tok op);
+    bool UnaryOpMatch(Tok op);
     bool IsCasteble(Type *To);
     bool IsCloneOf(Type *To);
 
     inline IntType *getIntTy() const noexcept {  return Ty; }
     std::string toStr() noexcept;
-    static EnumType* Create(ResourceMgr &mgr, IntType *_ITy);
+    static EnumType* Create(Context &mgr, IntType *_ITy);
 };
 
 
@@ -183,10 +183,10 @@ public:
     }
     inline Type* getRetType() const noexcept{ return retype; }
     bool IsCasteble(Type *To);
-    bool UnaryOpMatch(lex::Tok op);
+    bool UnaryOpMatch(Tok op);
     bool IsCloneOf(Type *To);
     std::string toStr() noexcept;
-    static FunctionType *Create(ResourceMgr &mgr, const std::vector<Type*>&_param, Type* _ret);
+    static FunctionType *Create(Context &mgr, const std::vector<Type*>&_param, Type* _ret);
 
 };
 
@@ -213,7 +213,7 @@ public:
     }
     inline StructStmt *getStructStmt() const noexcept { return Struct; }
     inline void setStructStmt(StructStmt *_Struct) noexcept { Struct = _Struct; }
-    bool UnaryOpMatch(lex::Tok op);
+    bool UnaryOpMatch(Tok op);
     bool IsCloneOf(Type *To);
     bool IsCasteble(Type *To);
     void InsertField(const std::string &n, Type *ty) {
@@ -228,7 +228,7 @@ public:
     std::string toStr() noexcept;
     // inline std::vector<TypeTy*> &getTemp() {return Temp;}
     // inline bool HasTemp() const {return !Temp.empty();}
-    static StructType *Create(ResourceMgr &mgr, const std::map<std::string, uint32_t>&_EleNameTypeList);
+    static StructType *Create(Context &mgr, const std::map<std::string, uint32_t>&_EleNameTypeList);
 };
 
 
@@ -243,11 +243,11 @@ public:
 
     inline Type *&getArrType() { return Ty; }
     inline size_t getSize() noexcept { return Size; }
-    bool UnaryOpMatch(lex::Tok op);
+    bool UnaryOpMatch(Tok op);
     bool IsCloneOf(Type *To);
     bool IsCasteble(Type *To);
     std::string toStr() noexcept;
-    static ArrayType *Create(ResourceMgr &mgr, Type *_Ty, size_t _Size);
+    static ArrayType *Create(Context &mgr, Type *_Ty, size_t _Size);
 };
 
 
@@ -261,8 +261,8 @@ public:
 
 //     inline uint32_t getContainedId() const { return TyId; }
 //     bool IsCloneOf(Type *To);
-//     bool UnaryOpMatch(lex::Tok op);
-//     static TypeTy *Create(ResourceMgr &mgr, uint32_t _TyId);
+//     bool UnaryOpMatch(Tok op);
+//     static TypeTy *Create(Context &mgr, uint32_t _TyId);
 // };
 
 
@@ -278,12 +278,12 @@ public:
     // inline std::string getScope() const noexcept { return str; }
     // inline bool IsEnum() const { return mask&1; }
     bool IsCloneOf(Type *To); 
-    bool UnaryOpMatch(lex::Tok op);
+    bool UnaryOpMatch(Tok op);
     bool IsCasteble(Type *To);
     // inline bool IsRMod() const noexcept { return mask&1; }
     // inline bool IsMod() const noexcept { return mask&2; }
     std::string toStr() noexcept;
-    static ScopeTy *Create(ResourceMgr &mgr, Module *_mod);
+    static ScopeTy *Create(Context &mgr, Module *_mod);
 };
 
 
@@ -302,13 +302,13 @@ public:
         mut = true;
     }
     size_t getCount() const noexcept;
-    PointerType *getPtrOf(ResourceMgr &mgr, int DefCount);
-    void clone(ResourceMgr &mgr) const noexcept;
-    bool UnaryOpMatch(lex::Tok op);
+    PointerType *getPtrOf(Context &mgr, int DefCount);
+    void clone(Context &mgr) const noexcept;
+    bool UnaryOpMatch(Tok op);
     bool IsCasteble(Type *To);
     bool IsCloneOf(Type *To);
     std::string toStr() noexcept;
-    static PointerType *Create(ResourceMgr &mgr, bool _mut, Type* _To);
+    static PointerType *Create(Context &mgr, bool _mut, Type* _To);
 };
 
 
@@ -322,9 +322,9 @@ public:
     ~RefType() {}
 
     inline Type *getTo() const noexcept {return To;}
-    PointerType *getPtr(ResourceMgr &mgr) noexcept;
-    static RefType *Create(ResourceMgr &mgr, Type *_To, bool _mut);
-    bool UnaryOpMatch(lex::Tok op);
+    PointerType *getPtr(Context &mgr) noexcept;
+    static RefType *Create(Context &mgr, Type *_To, bool _mut);
+    bool UnaryOpMatch(Tok op);
     inline bool IsMutRef() const noexcept { return mut; }
     bool IsCloneOf(Type *To);
     std::string toStr() noexcept;
@@ -337,8 +337,8 @@ public:
     :Type(TypeID::VoidTy) {}
     ~VoidType() {}
 
-    static VoidType *Create(ResourceMgr &mgr);
-    bool UnaryOpMatch(lex::Tok op);
+    static VoidType *Create(Context &mgr);
+    bool UnaryOpMatch(Tok op);
     bool IsCloneOf(Type *To);
     std::string toStr() noexcept;
     bool IsCasteble(Type *To);

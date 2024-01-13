@@ -77,3 +77,36 @@ LLVMWindowsManifest LLVMXRay LLVMLibDriver LLVMDlltoolDriver LLVMCoverage LLVMLi
 
 
 
+
+
+
+
+    if(Ty->isPointerTy()) {
+        if(AllocaInst *A = dyn_cast<AllocaInst>(Val)){
+            return Builder.CreateLoad(Ty, Val);
+        }else if(GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Val)) {
+            return Builder.CreateLoad(Ty, Val);
+        }else if(GlobalVariable *GV = dyn_cast<GlobalVariable>(Val)) {
+            return Builder.CreateLoad(Ty, Val);
+        }else if(LoadInst *L = dyn_cast<LoadInst>(Val)) {
+            return Builder.CreateLoad(Ty, Val);
+        }
+
+    }
+    else if(Val->getType()->isPointerTy()) {
+        if(AllocaInst *A = dyn_cast<AllocaInst>(Val)) {
+            return Builder.CreateLoad(Ty, Val);
+        }else if(CallInst *C = dyn_cast<CallInst>(Val)) {
+            return Val;
+        }else if(LoadInst *L = dyn_cast<LoadInst>(Val)) {
+            return Builder.CreateLoad(Ty, Val);
+        }else if(GlobalVariable *GV = dyn_cast<GlobalVariable>(Val)) {
+            return Builder.CreateLoad(Ty, Val);
+        }else if(GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Val)) {
+            return Builder.CreateLoad(Ty, Val);
+        }else if(ConstantExpr *CE = dyn_cast<ConstantExpr>(Val)) {
+            return Builder.CreateLoad(Ty, Val);
+        }
+
+    }
+
