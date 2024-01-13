@@ -1,6 +1,6 @@
 
 
-use LinkedList::LinkedList::LinkedList as LinkedList;
+use LinkedList::LinkedList as LL;
 use printf;
 use free;
 use malloc;
@@ -12,8 +12,8 @@ extern fn free;
 extern fn printf;
 */
 struct queue {
-    front *mut LinkedList::LinkedList,
-    top *mut LinkedList::LinkedList,
+    front *mut LL,
+    top *mut LL,
 }
 
 
@@ -21,14 +21,14 @@ interface queue {
     fn new_qeue(val i32) -> *mut queue {
         //let mut q = malloc(@szof(queue));
         let mut q = malloc(@szof(queue)) as *mut queue;
-        (*q).front = LinkedList::LinkedList::new_list(val);
+        (*q).front = LL::new_list(val);
         (*q).top = (*q).front;
         return q;
     }
 
     fn push(mut self, val i32) {
         if (*self).empty() {
-            (*self).front = LinkedList::LinkedList::new_list(val);
+            (*self).front = LL::new_list(val);
             (*self).top = (*self).front;
             return;
         }

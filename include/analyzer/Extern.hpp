@@ -1,5 +1,5 @@
 #pragma once
-#include"../ResMgr.hpp"
+#include"../Context.hpp"
 #include"../parser/Ast.hpp"
 namespace ast { 
 
@@ -8,9 +8,9 @@ class ExternHandler{
 public:
     ExternHandler(){}
     ~ExternHandler(){}
-    typedef void (*ExternStmt)(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base);
+    typedef void (*ExternStmt)(Context &Mgr, const StmtLoc *Loc, Ast **Base);
     #define EXTERN(name) \
-        void Extern_##name(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base)
+        void Extern_##name(Context &Mgr, const StmtLoc *Loc, Ast **Base)
 
     EXTERN(printf);
     EXTERN(scanf);

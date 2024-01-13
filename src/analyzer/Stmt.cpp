@@ -102,7 +102,7 @@ bool TypeChecker::visit(StructStmt *AstNode, Ast **SrcPtr) {
     StructType* s = StructType::Create(mgr, {});
     s->setStructStmt(AstNode);
     AstNode->setType(s);
-    std::vector<VarStmt *>&vars = AstNode->getfield();
+    Vec<VarStmt *>&vars = AstNode->getfield();
     for(size_t i = 0, siz = vars.size(); i < siz; i++) {
         std::string EleName = vars[i]->getVar().getStr();
         if(s->contains(EleName)){
@@ -150,7 +150,7 @@ bool TypeChecker::visit(EnumExpr *AstNode, Ast **SrcPtr) {
 
     IntType* ETy = static_cast<IntType *>(Ty->getTypeInfo());
 
-    std::vector<VarStmt *>&Vals = AstNode->getEVals();
+    Vec<VarStmt *>&Vals = AstNode->getEVals();
 
     for(auto &V :Vals) {
         std::string EName = V->getVar().getStr();
@@ -297,19 +297,19 @@ Ast *TypeChecker::getConstVal(Ast *Val, Ast **SrcPtr) {
     case VALUE::VBool:
     {
         IntVal *IVal = static_cast<IntVal *>(VVal); 
-        Val = BoolLiteral::Create(mgr, Val->getStmtLoc(), Lexeme(Val->getStmtLoc(), IVal->getVal(), IVal->getVal()?lex::TRUE:lex::FALSE));
+        Val = BoolLiteral::Create(mgr, Val->getStmtLoc(), Lexeme(Val->getStmtLoc(), IVal->getVal(), IVal->getVal()?TRUE:FALSE));
     }
     break;
     case VALUE::VInt:
     {
         IntVal *IVal = static_cast<IntVal *>(VVal); 
-        Val = NumericLiteral::Create(mgr, Val->getStmtLoc(), Lexeme(Val->getStmtLoc(), IVal->getVal(), lex::INT));
+        Val = NumericLiteral::Create(mgr, Val->getStmtLoc(), Lexeme(Val->getStmtLoc(), IVal->getVal(), INT));
     }
     break;
     case VALUE::VFlt:
     {
         FltVal *FVal = static_cast<FltVal *>(VVal); 
-        Val = FloatLiteral::Create(mgr, Val->getStmtLoc(), Lexeme(Val->getStmtLoc(), FVal->getVal(), lex::FLOAT));
+        Val = FloatLiteral::Create(mgr, Val->getStmtLoc(), Lexeme(Val->getStmtLoc(), FVal->getVal(), FLOAT));
     }
     break;
     default:
@@ -327,15 +327,15 @@ bool TypeChecker::visit(VarStmt *AstNode, Ast **SrcPtr) {
     std::string MID = AstNode->getStmtLoc()->getMod()->getModId();
     std::string MangleN = mangle_name(VarN.getStr(), MID, AstNode);
     VarN.setDataStr(MangleN);
+
+    if(varTy && !visit(varTy, &varTy))
+        return false;
+
     bool IsGlobVar = false;
     if(AstNode->IsConst() || AstNode->IsGlobVar()) {
         IsGlobVar = true;
         isConst = true;
     }
-
-    if(varTy && !visit(varTy, &varTy))
-        return false;
-
 
     if(isConst && !IsGlobVar && !varTy->Is(NodePreDefTy)) {
         err::err_out(AstNode, "invalid constant type\n expected preemetive type with const found ", varTy->toString());
@@ -439,9 +439,9 @@ bool TypeChecker::visit(FunctionProto *FnProto, Ast **SrcPtr) {
         }
     }
 
-    std::vector<Type*>ElementType;
+    Vec<Type*>ElementType;
     if(!FnProto->getParameter().empty()){
-        std::vector<VarStmt*>&Param = FnProto->getParameter();
+        Vec<VarStmt*>&Param = FnProto->getParameter();
         for(size_t i = 0, size = Param.size(); i < size; i++) {
             Ast *&Ty = Param[i]->getType();
             if(!visit(Ty, &Ty)){
@@ -488,7 +488,7 @@ bool TypeChecker::visit(Method *AstNode, Ast **SrcPtr) {
     }
     std::map<std::string, Type*>impl;
     auto st = static_cast<StructType*>(AssociateTy);
-    std::vector<Ast*> &impls = AstNode->getImpl();
+    Vec<Ast*> &impls = AstNode->getImpl();
 
     // first apply name mangling to all method function because
     // it might be possible that if any method function can call any other method function 
@@ -522,7 +522,7 @@ bool TypeChecker::visit(Method *AstNode, Ast **SrcPtr) {
 
 bool TypeChecker::visit(BlockStmt *AstNode, Ast **SrcPtr) {
     dumpSema("BlockStmt");
-    std::vector<Ast*> &Stmts = AstNode->getStmts();
+    Vec<Ast*> &Stmts = AstNode->getStmts();
 
     for(auto &S :Stmts) {
         if(S->getTypeInfo() || S->Is(NodeImpl)){

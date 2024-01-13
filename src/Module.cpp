@@ -12,13 +12,13 @@ namespace ast{
 Module::~Module() { }
 
 
-void Module::printTree() {
-    if(tree)
-        std::cout<<tree->toString()<<std::endl;
+void Module::printAsT() {
+    if(AsT)
+        std::cout<<AsT->toString()<<std::endl;
 }
 
 
-bool CreateModInfoByMod(std::string &path, const std::string &modname, ModuleInfo &modinfo) {
+bool CreateModInfoByMod(std::string &path, const std::string &modname, ModuleInfo &ModInfo) {
     std::string src = "";
     std::string dir = path;
     std::string absp = path;
@@ -26,11 +26,11 @@ bool CreateModInfoByMod(std::string &path, const std::string &modname, ModuleInf
         return false;
     }
 
-    modinfo = (ModuleInfo){absp, dir, src, modname};
+    ModInfo = (ModuleInfo){absp, dir, src, modname};
     return true;
 }
 
-bool CreateModInfoByAbsPath(std::string &path, ModuleInfo &modinfo) {
+bool CreateModInfoByAbsPath(std::string &path, ModuleInfo &ModInfo) {
     std::string src = "";
     std::string dir = path;
     std::string absp = path;
@@ -39,7 +39,7 @@ bool CreateModInfoByAbsPath(std::string &path, ModuleInfo &modinfo) {
         return false;
     }
 
-    modinfo = (ModuleInfo){absp,dir,src, modname};
+    ModInfo = (ModuleInfo){absp,dir,src, modname};
     return true;
 }
 
@@ -49,66 +49,60 @@ bool CreateModInfoByAbsPath(std::string &path, ModuleInfo &modinfo) {
 ModuleHelper::~ModuleHelper() {}
 
 
-bool ModuleHelper::LexSrc(ResourceMgr &mgr) {
-    lex::Lexer L(mgr, Mod);
-    int i = Mod->modinfo.src.size();
-    if(!L.tokenizer(Mod->modinfo.src, Mod->lexeme, 0, i)){
-        std::cout<<"faild to tokenize"<<std::endl;
+bool ModuleHelper::LexSrc(Context &mgr) {
+    Lexer L(mgr, Mod, Mod->ModInfo.src, Mod->LXMs);
+    int i = Mod->ModInfo.src.size();
+    if(!L.Tokenize()){
+        std::cout<<"failed to tokenize"<<std::endl;
         return false;
     }
     return true;
 }
 
-bool ModuleHelper::ParseToken(ResourceMgr &mgr) {
+bool ModuleHelper::ParseToken(Context &mgr) {
     parser::Parser p(mgr, Mod);
-    if(!p.parse(Mod->tree)){
-        std::cout<<"faild to parse"<<std::endl;
+    if(!p.parse(Mod->AsT)){
+        std::cout<<"failed to parse"<<std::endl;
         return false;
     }
     return true;
 }
 
 
-bool ModuleHelper::ResolveAst(ResourceMgr &mgr, Module *RMod) {
+bool ModuleHelper::ResolveAst(Context &mgr, Module *RMod) {
     Resolve R(mgr, RMod);
-    for(auto &m: Mod->submods){
+    for(auto &m: Mod->SubMods){
         ModuleHelper MH(m.second);
         if(!MH.ResolveAst(mgr, RMod)) {
             return false;
         }
     }
-    if(!R.resolve(&Mod->tree)){
+    if(!R.resolve(&Mod->AsT)){
         return false;
     }
     return true;
 }
 
 
-bool ModuleHelper::SemaAst(ResourceMgr &mgr, Module *RMod) {
+bool ModuleHelper::SemaAst(Context &mgr, Module *RMod) {
     TypeChecker TyC(mgr, RMod);
-    // for(auto &m: Mod->submods){
-    //     ModuleHelper MH(m.second);
-    //     if(!MH.SemaAst(mgr, RMod)) {
-    //         return false;
-    //     }
-    // }
-    if(!TyC.Analyze(RMod->tree)){
+    if(!TyC.Analyze(RMod->AsT)){
         return false;
     }
     return true;
 }
 
 
-Module *ModuleHelper::CreateMod(ResourceMgr &mgr, std::string modName, Module *PMod) {
-    ModuleInfo modinfo = {};
+Module *ModuleHelper::CreateMod(Context &mgr, std::string modName, Module *PMod) {
+    ModuleInfo ModInfo = {};
     std::string path = PMod->getDirPath();
-    if(!CreateModInfoByMod(path, modName, modinfo)){
+    if(!CreateModInfoByMod(path, modName, ModInfo)){
         return nullptr;
     }
-    Module * M = mgr.CreateMod(modinfo);
-    PMod->submods.insert({modinfo.modname, M});
+    Module *M = mgr.CreateMod(ModInfo);
+    PMod->SubMods.insert({ModInfo.modname, M});
     if(M == nullptr){
-        std::cout<<"failed to build mod  - "<<modName<<std::endl;;
+        std::cout<<"failed to build module  - "<<modName<<std::endl;;
         return nullptr;
     }
     return M;

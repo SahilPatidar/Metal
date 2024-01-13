@@ -1,12 +1,15 @@
-mod LinkedList;
-mod Queue;
+/*mod LinkedList;
+mod Queue;*/
 use LinkedList::LinkedList as LL;
 use Queue::queue;
-
+/*
 extern fn malloc;
 extern fn free;
 extern fn printf;
-
+*/
+use malloc;
+use free;
+use printf;
 struct Graph{
     node [9]*mut LL
 }
@@ -17,7 +20,7 @@ struct Node{
 
 interface Graph {
     fn new_graph() -> *mut Graph {
-        let mut new_g = new(1, Graph);
+        let mut new_g = malloc(@szof(Graph)) as *mut Graph;
         for i in 0..9 {
             (*new_g).node[i] = null;
         }
@@ -69,7 +72,7 @@ interface Graph {
         }
     }
 }
-
+/*
 fn main() -> i32{
     let mut g = Graph::new_graph();
     (*g).add_edge(0, 1);
@@ -89,3 +92,4 @@ fn main() -> i32{
     
     return 0;
 }
+*/

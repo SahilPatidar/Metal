@@ -4,7 +4,7 @@
 
 namespace ast {
     
-    void ExternHandler::Extern_printf(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_printf(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         std::vector<VarStmt *>Params;
         PremitiveType *Int = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i32", I32));
         PremitiveType *Char = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i8", I8));
@@ -18,7 +18,7 @@ namespace ast {
     }
 
 
-    void ExternHandler::Extern_scanf(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_scanf(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         std::vector<VarStmt *>Params;
         PremitiveType *Int = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i32", I32));
         PremitiveType *Char = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i8", I8));
@@ -32,7 +32,7 @@ namespace ast {
     }
 
 
-    void ExternHandler::Extern_fflush(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_fflush(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         std::vector<VarStmt *>Params;
         PremitiveType *Int = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i32", I32));
         Identifier *_FILE = Identifier::Create(Mgr, Loc, Lexeme(Loc, "FILE", IDEN));
@@ -44,7 +44,7 @@ namespace ast {
     }
 
 
-    void ExternHandler::Extern_getline(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_getline(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         std::vector<VarStmt *>Params;
         // ssize_t getline(char **__linep, size_t *__linecapp, FILE *__stream)
         PremitiveType *Ssize_t = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i64", I64));
@@ -67,7 +67,7 @@ namespace ast {
     }
 
 
-    void ExternHandler::Extern_strlen(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_strlen(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         std::vector<VarStmt *>Params;
         PremitiveType *Size_t = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "ui64", UI64));
 
@@ -81,7 +81,7 @@ namespace ast {
         *Base = Fn;
     }
 
-    void ExternHandler::Extern_exit(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_exit(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         std::vector<VarStmt *>Params;
         PremitiveType *Int = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i32", I32));
         VarStmt *Var = VarStmt::Create(Mgr, Loc, Lexeme(Loc, "status", IDEN), Int, nullptr, _MUT);
@@ -136,7 +136,7 @@ namespace ast {
 //     EXTERN(seekdir);
 //     EXTERN(telldir);
 
-    void ExternHandler::Extern_open(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_open(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         std::vector<VarStmt *>Params;
         PremitiveType *Int = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i32", I32));
         PremitiveType *Char = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i8", I8));
@@ -151,7 +151,7 @@ namespace ast {
     }
 
 
-    void ExternHandler::Extern_read(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_read(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         std::vector<VarStmt *>Params;
         //int __fd, const void *__buf, size_t __nbyte
         PremitiveType *Int = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i32", I32));
@@ -169,7 +169,7 @@ namespace ast {
     }
 
 
-    void ExternHandler::Extern_write(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_write(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         std::vector<VarStmt *>Params;
         //int __fd, const void *__buf, size_t __nbyte
         PremitiveType *Int = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i32", I32));
@@ -188,7 +188,7 @@ namespace ast {
 
 
 
-    void ExternHandler::Extern_close(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_close(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         PremitiveType *Int = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i32", I32));
         VarStmt *P = VarStmt::Create(Mgr, Loc, Lexeme(Loc, "_fd", IDEN), Int, nullptr, _CONST);
         FunctionProto *Fn = FunctionProto::Create(Mgr, Loc, Lexeme(Loc, "close", IDEN), {P}, Int);
@@ -198,7 +198,7 @@ namespace ast {
 
 
 
-    void ExternHandler::Extern_fopen(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_fopen(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         std::vector<VarStmt *>Params;
         PrefixExpr *FPtr = PrefixExpr::Create(Mgr, Loc, Tok(STAR), Identifier::Create(Mgr, Loc, Lexeme(Loc, "FILE", IDEN)), true, true);
         PremitiveType *Char = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i8", I8));
@@ -210,7 +210,7 @@ namespace ast {
         *Base = Fn;
     }
 
-    void ExternHandler::Extern_fclose(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_fclose(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         std::vector<VarStmt *>Params;
         PrefixExpr *FPtr = PrefixExpr::Create(Mgr, Loc, Tok(STAR), Identifier::Create(Mgr, Loc, Lexeme(Loc, "FILE", IDEN)), true, true);
         VarStmt *Param = VarStmt::Create(Mgr, Loc, Lexeme(Loc, "__file", IDEN), FPtr, nullptr, _CONST);
@@ -221,7 +221,7 @@ namespace ast {
     }
 
 
-    void ExternHandler::Extern___sbuf(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern___sbuf(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         /* stdio buffers */
         // struct __sbuf {
         //     unsigned char	*_base;
@@ -240,13 +240,13 @@ namespace ast {
         *Base = StructStmt::Create(Mgr, Loc, _Sbuf, _SbufField);
     }
 
-    void ExternHandler::Extern___sFILEX(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern___sFILEX(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         Lexeme __SFILEX(Loc, "__sFILEX", IDEN);
         std::vector<VarStmt *>_SbufField;
         *Base = StructStmt::Create(Mgr, Loc, __SFILEX, _SbufField);
     }
 
-    void ExternHandler::Extern_FILE(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_FILE(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         std::vector<VarStmt *>Vars;
 
         PremitiveType *Int = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i32", I32));
@@ -346,7 +346,7 @@ namespace ast {
         *Base = StructStmt::Create(Mgr, Loc, Lexeme(Loc, "FILE", IDEN), Vars);
     }
 
-    void ExternHandler::Extern_free(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base){
+    void ExternHandler::Extern_free(Context &Mgr, const StmtLoc *Loc, Ast **Base){
         Void *VPtr = Void::Create(Mgr, Loc);
         FunctionProto *Fn = FunctionProto::Create(Mgr, Loc, Lexeme(Loc, "free", IDEN), 
                             {VarStmt::Create(Mgr, Loc, Lexeme(Loc, "__ptr", IDEN), PrefixExpr::Create(Mgr, Loc, Tok(STAR), VPtr, true, true), nullptr, 0)}, 
@@ -355,7 +355,7 @@ namespace ast {
         *Base = Fn;
     }
 
-    void ExternHandler::Extern_realloc(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base){
+    void ExternHandler::Extern_realloc(Context &Mgr, const StmtLoc *Loc, Ast **Base){
         Void *VPtr = Void::Create(Mgr, Loc);
         PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "ui64", UI64));
         FunctionProto *Fn = FunctionProto::Create(Mgr, Loc, Lexeme(Loc, "realloc", IDEN), 
@@ -367,7 +367,7 @@ namespace ast {
     }
 
 
-    void ExternHandler::Extern_creat(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base) {
+    void ExternHandler::Extern_creat(Context &Mgr, const StmtLoc *Loc, Ast **Base) {
         PremitiveType *Char = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i8", I8));
         PremitiveType *Int = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "i32", I32));
         PremitiveType *USort = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "ui16", UI16));
@@ -380,7 +380,7 @@ namespace ast {
         *Base = Fn;
     }
 
-    void ExternHandler::Extern_calloc(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base){
+    void ExternHandler::Extern_calloc(Context &Mgr, const StmtLoc *Loc, Ast **Base){
         Void *VPtr = Void::Create(Mgr, Loc);
         PremitiveType *Size_T = PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "ui64", UI64));
         FunctionProto *Fn = FunctionProto::Create(Mgr, Loc, Lexeme(Loc, "calloc", IDEN), 
@@ -390,7 +390,7 @@ namespace ast {
         *Base = Fn;
     }
 
-    void ExternHandler::Extern_malloc(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base){
+    void ExternHandler::Extern_malloc(Context &Mgr, const StmtLoc *Loc, Ast **Base){
         Void *VPtr = Void::Create(Mgr, Loc);
         FunctionProto *Fn = FunctionProto::Create(Mgr, Loc, Lexeme(Loc, "malloc", IDEN),
                              {VarStmt::Create(Mgr, Loc, Lexeme(Loc, "__size", IDEN), PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "ui64", UI64)), nullptr, 0)}, 
@@ -400,7 +400,7 @@ namespace ast {
     }
 
 
-    void ExternHandler::Extern_memset(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base){
+    void ExternHandler::Extern_memset(Context &Mgr, const StmtLoc *Loc, Ast **Base){
         Void *VPtr = Void::Create(Mgr, Loc);
         PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "ui64", UI64));
         FunctionProto *Fn = FunctionProto::Create(Mgr, Loc, Lexeme(Loc, "memset", IDEN),
@@ -412,7 +412,7 @@ namespace ast {
         *Base = Fn;
     }
 
-    void ExternHandler::Extern_memcpy(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base){
+    void ExternHandler::Extern_memcpy(Context &Mgr, const StmtLoc *Loc, Ast **Base){
         Void *VPtr = Void::Create(Mgr, Loc);
         PrefixExpr *Ptr = PrefixExpr::Create(Mgr, Loc, STAR, VPtr, true, true);
         PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "ui64", UI64));
@@ -425,7 +425,7 @@ namespace ast {
         *Base = Fn;
     }
 
-    void ExternHandler::Extern_memccpy(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base){
+    void ExternHandler::Extern_memccpy(Context &Mgr, const StmtLoc *Loc, Ast **Base){
         Void *VPtr = Void::Create(Mgr, Loc);
         PrefixExpr *Ptr = PrefixExpr::Create(Mgr, Loc, STAR, VPtr, true, true);
         PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "ui64", UI64));
@@ -439,7 +439,7 @@ namespace ast {
         *Base = Fn;
     }
 
-    void ExternHandler::Extern_memcmp(ResourceMgr &Mgr, const StmtLoc *Loc, Ast **Base){
+    void ExternHandler::Extern_memcmp(Context &Mgr, const StmtLoc *Loc, Ast **Base){
         Void *VPtr = Void::Create(Mgr, Loc);
         PrefixExpr *Ptr = PrefixExpr::Create(Mgr, Loc, STAR, VPtr, true, true);
         PremitiveType::Create(Mgr, Loc, Lexeme(Loc, "ui64", UI64));

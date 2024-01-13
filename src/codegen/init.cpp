@@ -4,7 +4,7 @@
 #include"../include/codegen/Asm.hpp"
 #include"../include/utils/File.hpp"
 #include"../include/Module.hpp"
-#include"../include/ResMgr.hpp"
+#include"../include/Context.hpp"
 #include"llvm/Linker/Linker.h"
 
 namespace codegen{
@@ -14,7 +14,7 @@ static bool codegenS(ast::Module *M, codegen::IRCodegenVisitor &CodeGen) {
             return false;
         }
     }
-    if(!CodeGen.codeGen(M->getTree())) {
+    if(!CodeGen.codeGen(M->getAst())) {
         return false;
     }
     return true;
@@ -27,7 +27,7 @@ bool InitCodegen(ast::Module *M) {
    llvm::Module TheModule("main", Context);
    codegen::IRCodegenVisitor CodeGen(Context, TheModule, Builder);
    if(!codegenS(M, CodeGen)) {
-    return false;
+        return false;
    }
       llvm::verifyModule(TheModule);
 
@@ -37,8 +37,9 @@ bool InitCodegen(ast::Module *M) {
       std::cerr<<"error : unable to convert to ir"<<std::endl;
 
    TheModule.dump();
-   codegen::LLVMIRToAsm(TheModule);
+   codegen::LLVMIRToAsm(TheModule, M->getPath());
    TheModule.dump();
+   return true;
 }
 
 }

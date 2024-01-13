@@ -23,7 +23,7 @@ Type *IRCodegenVisitor::codeGenTy(ast::Ast *AstNode) {
         Type *Ty = codeGenTy(PtrTy->getBase());
         Ty = PointerType::get(Ty, 0);
         if(!Ty) {
-            err::err_out(PtrTy, "unable convert to IR");
+            err::err_out(PtrTy, "Failed to generate IR");
             return nullptr;
         }
         return Ty;
@@ -31,7 +31,6 @@ Type *IRCodegenVisitor::codeGenTy(ast::Ast *AstNode) {
         break;
     case ast::NodeIdent:
     {
-        std::cout<<"ident"<<std::endl;
         ast::Identifier *Ident = static_cast<ast::Identifier *>(AstNode);
         std::cout<<Ident->getIdent()<<std::endl;
         if(NamedTypes.find(Ident->getIdent()) != NamedTypes.end()){
@@ -42,7 +41,7 @@ Type *IRCodegenVisitor::codeGenTy(ast::Ast *AstNode) {
         }
         Type *Ty = NamedTypes[Ident->getIdent()];
         if(!Ty){
-            err::err_out(AstNode, "unable convert to IR");
+            err::err_out(AstNode, "Failed to generate IR");
             return nullptr;
         }
         return Ty;
@@ -76,7 +75,7 @@ Type *IRCodegenVisitor::codeGenFnType(ast::FnType *AstNode) {
         RetTy = Builder.getVoidTy();
     }
     if(!RetTy) {
-        err::err_out(Fn, "unable convert to IR");
+        err::err_out(Fn, "Failed to generate IR");
         return nullptr;
     }
 
@@ -84,7 +83,7 @@ Type *IRCodegenVisitor::codeGenFnType(ast::FnType *AstNode) {
     for(auto &P :PTy) {
         Tys.push_back(codeGenTy(P));
         if(!Tys.back()){
-            err::err_out(Fn, "unable convert to IR");
+            err::err_out(Fn, "Failed to generate IR");
             return nullptr;
         }
     }
@@ -97,26 +96,25 @@ Type *IRCodegenVisitor::codeGenPremitiveType(ast::PremitiveType *AstNode) {
     dumpir1("PremitiveType");
     switch (AstNode->getType().getTokType())
     {
-    case lex::I8:
-    case lex::UI8:
-    // case lex::BOOL:
+    case ast::I8:
+    case ast::UI8:
         return Type::getInt8Ty(Context);
-    case lex::I16:
-    case lex::UI16:
+    case ast::I16:
+    case ast::UI16:
         return Type::getInt16Ty(Context);
-    case lex::I32:
-    case lex::UI32:
+    case ast::I32:
+    case ast::UI32:
         return Type::getInt32Ty(Context);
-    case lex::I64:
-    case lex::UI64:
+    case ast::I64:
+    case ast::UI64:
         return Type::getInt64Ty(Context);
-    case lex::I128:
+    case ast::I128:
         return Type::getInt128Ty(Context);
-    case lex::F32:
+    case ast::F32:
         return Type::getFloatTy(Context);
-    case lex::F64:
+    case ast::F64:
         return Type::getDoubleTy(Context);
-    case lex::BOOL:
+    case ast::BOOL:
         return Type::getInt1Ty(Context);
     default:
         break;
@@ -140,7 +138,7 @@ Type *IRCodegenVisitor::codeGenArray(ast::Array *AstNode ) {
     if(!ArrTy) {
         return nullptr;
     }
-
+    addTy(AstNode->getTypeInfo()->getuId(), ArrTy);
     dumpir2("Array");
     return ArrTy;
 }
@@ -148,10 +146,8 @@ Type *IRCodegenVisitor::codeGenArray(ast::Array *AstNode ) {
 
 Type *IRCodegenVisitor::getTypeUsingStmtTypeInfo(ast::Type *Ty) {
     dumpir1(__func__);
-    std::cout<<Ty<<std::endl;
     Type *IRTy = getStoredTy(Ty->getuId());
     if(IRTy) {
-        std::cout<<"found"<<std::endl;
         return IRTy;
     }
 
@@ -159,7 +155,6 @@ Type *IRCodegenVisitor::getTypeUsingStmtTypeInfo(ast::Type *Ty) {
     {
     case ast::Type::ArrayTy:
     {
-    std::cout<<"ArrayTy"<<std::endl;
         ast::ArrayType *StmtArrTy = static_cast<ast::ArrayType *>(Ty);
         size_t size = StmtArrTy->getSize();
         Type *IRArrTy = getTypeUsingStmtTypeInfo(StmtArrTy->getArrType());
@@ -175,7 +170,6 @@ Type *IRCodegenVisitor::getTypeUsingStmtTypeInfo(ast::Type *Ty) {
     break;
     case ast::Type::StructTy:
     {
-        std::cout<<"StructTy"<<std::endl;
         StructType *IRSTy = StructType::get(Context);
         ast::StructType *STy = static_cast<ast::StructType *>(Ty);
         TypeMap.insert({Ty->getuId(), IRSTy});
@@ -197,7 +191,6 @@ Type *IRCodegenVisitor::getTypeUsingStmtTypeInfo(ast::Type *Ty) {
     break;
     case ast::Type::IntTy:
     {
-    std::cout<<"IntTy"<<std::endl;
         int8_t Bit = static_cast<ast::IntType *>(Ty)->getbit();
         if(Bit == 64)
             IRTy = Type::getInt64Ty(Context);
@@ -214,14 +207,12 @@ Type *IRCodegenVisitor::getTypeUsingStmtTypeInfo(ast::Type *Ty) {
     break;
     case ast::Type::EnumTy:
     {
-    std::cout<<"IntTy"<<std::endl;
         ast::IntType *ITy = ast::as<ast::EnumType>(Ty)->getIntTy();
         IRTy = getTypeUsingStmtTypeInfo(ITy);
     }
     break;
     case ast::Type::FltTy:
     {
-    std::cout<<"FltTy"<<std::endl;
         int8_t Bit = static_cast<ast::FloatType *>(Ty)->getbit();
         if(Bit == 64)
             IRTy = Type::getDoubleTy(Context);
@@ -232,7 +223,6 @@ Type *IRCodegenVisitor::getTypeUsingStmtTypeInfo(ast::Type *Ty) {
     break;
     case ast::Type::PointerTy:
     {
-    std::cout<<"PointerTy"<<std::endl;
         ast::PointerType *PtrTy = static_cast<ast::PointerType *>(Ty);
         Type *PTy = getTypeUsingStmtTypeInfo(PtrTy->getTo());
         PTy = PointerType::get(PTy, 0);
@@ -246,7 +236,6 @@ Type *IRCodegenVisitor::getTypeUsingStmtTypeInfo(ast::Type *Ty) {
     break;
     case ast::Type::RefTy:
     {
-    std::cout<<"RefTy"<<std::endl;
         ast::RefType *RTy = static_cast<ast::RefType *>(Ty);
         Type *LRTy = getTypeUsingStmtTypeInfo(RTy->getTo());
         if(!LRTy) {
@@ -259,7 +248,6 @@ Type *IRCodegenVisitor::getTypeUsingStmtTypeInfo(ast::Type *Ty) {
     break;
     case ast::Type::FunctionTy:
     {
-    std::cout<<"FunctionTy"<<std::endl;
         ast::FunctionType *FnTy = static_cast<ast::FunctionType *>(Ty);
         std::vector<Type *>PTys;
         for(auto &P: FnTy->getParamTypes()) {
@@ -278,7 +266,6 @@ Type *IRCodegenVisitor::getTypeUsingStmtTypeInfo(ast::Type *Ty) {
     break;
     case ast::Type::VoidTy:
     {
-    std::cout<<"voidTy"<<std::endl;
         IRTy = Type::getInt8Ty(Context);
     }
     break;

@@ -4,16 +4,28 @@
 
 namespace ast {
 
-bool IsValidFmt(std::string &fmt, Type *Ty) {
+bool isValidFmt(String &fmt) {
+    if(fmt == "%d" || fmt == "%hd" || fmt == "%hhd" || 
+        fmt == "%lld" || fmt == "%u" || fmt == "%hu" || 
+        fmt == "%hhu" || fmt == "%llu" || fmt == "%c" || 
+        fmt == "%s" || fmt == "%p" || fmt == "%f") {
+        return true;
+    }
+    return false;
+}
+
+bool IsValidArgForFmt(String &fmt, Type *Ty, bool isConst) {
     if(fmt == "%d") {
-        if(!Ty->Is(Type::IntTy)) {
+        if(!Ty->isIntTy()) {
             return false;
         }
         IntType *ITy = static_cast<IntType *>(Ty);
         if(ITy->getbit() == 1){
             return true;
         }
-
+        if(isConst) {
+            return true;
+        }
         if(ITy->getbit() != 32) {
             return false;
         }
@@ -21,11 +33,14 @@ bool IsValidFmt(std::string &fmt, Type *Ty) {
             return false;
         }
     }else if(fmt == "%hd") {
-        if(!Ty->Is(Type::IntTy)) {
+        if(!Ty->isIntTy()) {
             return false;
         }
         IntType *ITy = static_cast<IntType *>(Ty);
         if(ITy->getbit() == 1){
+            return true;
+        }
+        if(isConst) {
             return true;
         }
         if(ITy->getbit() != 16) {
@@ -35,11 +50,14 @@ bool IsValidFmt(std::string &fmt, Type *Ty) {
             return false;
         }
     }else if(fmt == "%hhd") {
-        if(!Ty->Is(Type::IntTy)) {
+        if(!Ty->isIntTy()) {
             return false;
         }
         IntType *ITy = static_cast<IntType *>(Ty);
         if(ITy->getbit() == 1){
+            return true;
+        }
+        if(isConst) {
             return true;
         }
         if(ITy->getbit() != 8) {
@@ -49,11 +67,14 @@ bool IsValidFmt(std::string &fmt, Type *Ty) {
             return false;
         }
     }else if(fmt == "%lld") {
-        if(!Ty->Is(Type::IntTy)) {
+        if(!Ty->isIntTy()) {
             return false;
         }
         IntType *ITy = static_cast<IntType *>(Ty);
         if(ITy->getbit() == 1){
+            return true;
+        }
+        if(isConst) {
             return true;
         }
         if(ITy->getbit() != 64) {
@@ -63,11 +84,14 @@ bool IsValidFmt(std::string &fmt, Type *Ty) {
             return false;
         }
     }else if(fmt == "%u") {
-        if(!Ty->Is(Type::IntTy)) {
+        if(!Ty->isIntTy()) {
             return false;
         }
         IntType *ITy = static_cast<IntType *>(Ty);
         if(ITy->getbit() == 1){
+            return true;
+        }
+        if(isConst) {
             return true;
         }
         if(ITy->getbit() != 32) {
@@ -77,11 +101,14 @@ bool IsValidFmt(std::string &fmt, Type *Ty) {
             return false;
         }
     }else if(fmt == "%hu") {
-        if(!Ty->Is(Type::IntTy)) {
+        if(!Ty->isIntTy()) {
             return false;
         }
         IntType *ITy = static_cast<IntType *>(Ty);
         if(ITy->getbit() == 1){
+            return true;
+        }
+        if(isConst) {
             return true;
         }
         if(ITy->getbit() != 8) {
@@ -91,11 +118,14 @@ bool IsValidFmt(std::string &fmt, Type *Ty) {
             return false;
         }
     }else if(fmt == "%hhu") {
-        if(!Ty->Is(Type::IntTy)) {
+        if(!Ty->isIntTy()) {
             return false;
         }
         IntType *ITy = static_cast<IntType *>(Ty);
         if(ITy->getbit() == 1){
+            return true;
+        }
+        if(isConst) {
             return true;
         }
         if(ITy->getbit() != 16) {
@@ -105,11 +135,15 @@ bool IsValidFmt(std::string &fmt, Type *Ty) {
             return false;
         }
     }else if(fmt == "%llu") {
-        if(!Ty->Is(Type::IntTy)) {
+        if(!Ty->isIntTy()) {
             return false;
         }
+
         IntType *ITy = static_cast<IntType *>(Ty);
         if(ITy->getbit() == 1){
+            return true;
+        }
+        if(isConst) {
             return true;
         }
         if(ITy->getbit() != 64) {
@@ -119,7 +153,7 @@ bool IsValidFmt(std::string &fmt, Type *Ty) {
             return false;
         }
     }else if(fmt == "%c") {
-        if(!Ty->Is(Type::IntTy)) {
+        if(!Ty->isIntTy()) {
             return false;
         }
         IntType *ITy = static_cast<IntType *>(Ty);
@@ -128,12 +162,12 @@ bool IsValidFmt(std::string &fmt, Type *Ty) {
             return false;
         }
     }else if(fmt == "%s") {
-        if(!Ty->Is(Type::PointerTy) && !Ty->Is(Type::ArrayTy)) {
+        if(!Ty->isPointerTy() && !Ty->isArrayTy()) {
             return false;
         }
-        if(Ty->Is(Type::PointerTy)) {
+        if(Ty->isPointerTy()) {
             PointerType *PTy = static_cast<PointerType *>(Ty);
-            if(!PTy->getTo()->Is(Type::IntTy)) {
+            if(!PTy->getTo()->isIntTy()) {
                 return false;
             }
             IntType *ITy = static_cast<IntType *>(PTy->getTo());
@@ -142,7 +176,7 @@ bool IsValidFmt(std::string &fmt, Type *Ty) {
             }
         }else {
             ArrayType *ATy = static_cast<ArrayType *>(Ty);
-            if(!ATy->getArrType()->Is(Type::IntTy)) {
+            if(!ATy->getArrType()->isIntTy()) {
                 return false;
             }
             IntType *ITy = static_cast<IntType *>(ATy->getArrType());
@@ -151,11 +185,11 @@ bool IsValidFmt(std::string &fmt, Type *Ty) {
             }
         }
     }else if(fmt == "%p") {
-        if(!Ty->Is(Type::RefTy) &&  !Ty->Is(Type::PointerTy) && !Ty->Is(Type::ArrayTy)) {
+        if(!Ty->isRefTy() &&  !Ty->isPointerTy() && !Ty->isArrayTy()) {
             return false;
         }
     }else if(fmt == "%f") {
-        if(!Ty->Is(Type::FltTy)) {
+        if(!Ty->isFltTy()) {
             return false;
         }
     }else {
@@ -164,7 +198,7 @@ bool IsValidFmt(std::string &fmt, Type *Ty) {
     return true;
 }
 
-std::string getFmt(std::string &s, std::string &fmt, size_t &pos) {
+String getFmt(String &s, String &fmt, size_t &pos) {
     size_t length = s.size();
     pos++;
     while(pos < length && ((s[pos] >= '0' && s[pos] <= '9') || (s[pos] >= 'a' && s[pos] <= 'z') || (s[pos] >= 'A' && s[pos] <= 'Z'))) {
@@ -178,8 +212,8 @@ std::string getFmt(std::string &s, std::string &fmt, size_t &pos) {
 bool TypeChecker::CheckPrintExtCall(Expression &Expr) {
     Ast *&lhs = Expr.getLhs();
     Ast *&rhs = Expr.getRhs();
-    std::string lhsN = lhs->toString();
-    std::string rhsN = rhs->toString();
+    String lhsN = lhs->toString();
+    String rhsN = rhs->toString();
 
     std::vector<Ast *> &field = static_cast<FieldExpr*>(rhs)->getArgs();
     if(!field[0]->Is(NodeStrLit)) {
@@ -191,8 +225,8 @@ bool TypeChecker::CheckPrintExtCall(Expression &Expr) {
         err::err_out(field[0], "format argument must be a string literal");
         return false;
     }
-    std::string fmt = "";
-    std::string StrArg = Str->getLexeme().getStr();
+    String fmt = "";
+    String StrArg = Str->getLexeme().getStr();
     if(field.size() > 1){
         size_t argIdx = 1;
         for(size_t i = 0, siz = StrArg.size(); i < siz; i++) {
@@ -201,15 +235,19 @@ bool TypeChecker::CheckPrintExtCall(Expression &Expr) {
                     err::err_out(field[argIdx], "too few args");
                     return false;
                 }
-                std::string fmt = "%";
+                String fmt = "%";
                 getFmt(StrArg, fmt, i);
                 if(fmt.empty()) {
                     err::err_out(field[argIdx], "invalid formate string");
                     return false;
                 }
-                
-                if(!IsValidFmt(fmt, field[argIdx]->getTypeInfo())) {
-                    err::err_out(field[argIdx], "invalid formate string `"+fmt+"` for arg");
+
+                if(!isValidFmt(fmt)) {
+                    err::err_out(field[argIdx], "invalid formate string `", fmt,"`");
+                    return false;
+                }
+                if(!IsValidArgForFmt(fmt, field[argIdx]->getTypeInfo(), field[argIdx]->IsConst())) {
+                    err::err_out(field[argIdx], "invalid formate string `", fmt,"` for arg type `", field[argIdx]->getTypeInfo()->toStr(),"`");
                     return false;
                 }
                 argIdx++;
@@ -226,8 +264,8 @@ bool TypeChecker::CheckPrintExtCall(Expression &Expr) {
 bool TypeChecker::CheckScanfExtCall(Expression &Expr) {
     Ast *&lhs = Expr.getLhs();
     Ast *&rhs = Expr.getRhs();
-    std::string lhsN = lhs->toString();
-    std::string rhsN = rhs->toString();
+    String lhsN = lhs->toString();
+    String rhsN = rhs->toString();
 
     std::vector<Ast *> &field = static_cast<FieldExpr*>(rhs)->getArgs();
     if(!field[0]->Is(NodeStrLit)) {
@@ -239,8 +277,8 @@ bool TypeChecker::CheckScanfExtCall(Expression &Expr) {
         err::err_out(field[0], "format argument must be a string literal");
         return false;
     }
-    std::string fmt = "";
-    std::string StrArg = Str->getLexeme().getStr();
+    String fmt = "";
+    String StrArg = Str->getLexeme().getStr();
     if(field.size() > 1){
         size_t argIdx = 1;
         for(size_t i = 0, siz = StrArg.size(); i < siz; i++) {
@@ -250,24 +288,28 @@ bool TypeChecker::CheckScanfExtCall(Expression &Expr) {
                     return false;
                 }
                 Type *ArgTy = field[argIdx]->getTypeInfo();
-                if(!ArgTy->Is(Type::RefTy) && !ArgTy->Is(Type::PointerTy)) {
+                if(!ArgTy->isRefTy() && !ArgTy->isPointerTy()) {
                     err::err_out(field[argIdx], "invalid arg for format string");
                     return false;
                 }
-                std::string fmt = "%";
+                String fmt = "%";
                 getFmt(StrArg, fmt, i);
                 if(fmt.empty()) {
                     err::err_out(field[argIdx], "invalid formate string");
                     return false;
                 }
                 Type *Ty = nullptr;
-                if(ArgTy->Is(Type::RefTy)){
+                if(ArgTy->isRefTy()){
                     Ty = static_cast<RefType *>(ArgTy)->getTo();
-                }else if(ArgTy->Is(Type::PointerTy)) {
+                }else if(ArgTy->isPointerTy()) {
                     Ty = static_cast<PointerType *>(ArgTy)->getTo();
                 }
-                if(!IsValidFmt(fmt, Ty)) {
-                    err::err_out(field[argIdx], "invalid formate string");
+                if(!isValidFmt(fmt)) {
+                    err::err_out(field[argIdx], "invalid formate string `", fmt,"`");
+                    return false;
+                }
+                if(!IsValidArgForFmt(fmt, Ty, field[argIdx]->IsConst())) {
+                    err::err_out(field[argIdx], "invalid formate string `", fmt,"` for arg type `", Ty->toStr(),"`");
                     return false;
                 }
                 argIdx++;

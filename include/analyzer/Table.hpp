@@ -1,23 +1,23 @@
 #pragma once
-#include<map>
+#include"../Core.hpp"
 
 template<typename T>
 class StackV{
 private:
-    std::map<std::string, T>info;
+    ast::Map<ast::String, T>info;
 public:
     StackV() {}
     ~StackV() {}
 
-    inline void add(std::string &n, T Node) {
+    inline void add(ast::String &n, T Node) {
         info.insert({n, Node});
     }
-    inline T getInfo(const std::string &n)  { 
+    inline T getInfo(const ast::String &n)  { 
         return info.find(n) == info.end()? 0: info[n]; 
     }
     inline bool isempty() const { return info.empty(); }
 
-    inline bool Has(const std::string &n) {
+    inline bool Has(const ast::String &n) {
         return info.find(n) != info.end();
     }
 
@@ -27,7 +27,7 @@ public:
 template<typename T>
 class FStack{
 private:
-    std::vector<StackV<T>> stack;
+    ast::Vec<StackV<T>> stack;
 public:
     FStack() {}
     ~FStack(){}
@@ -35,14 +35,14 @@ public:
 
     // FunctionType *getFunc() const noexcept { return Func; }
     
-    inline void add(std::string &n, T Node) {
+    inline void add(ast::String &n, T Node) {
         stack.back().add(n,Node);
     }
     inline void pushStack()  { stack.emplace_back(); }
     inline void popStack()  { stack.pop_back(); }
     inline bool empty()  { return stack.empty(); }
 
-    bool Has(const std::string &n, bool Top) {
+    bool Has(const ast::String &n, bool Top) {
         ssize_t i = stack.size()-1;
         while(i >= 0) {
             if(stack[i].Has(n)){
@@ -56,7 +56,7 @@ public:
         return false;
     }
     // void setFn(FunctionType *Fn) noexcept { Func = Fn;}
-    T getInfo(const std::string &n, bool Top) {
+    T getInfo(const ast::String &n, bool Top) {
         ssize_t i = stack.size()-1;
         while(i >= 0) {
             T V = stack[i].getInfo(n);
@@ -73,7 +73,7 @@ public:
 template<typename T>
 class Table{
 private:
-    std::vector<FStack<T>>funcstack;
+    ast::Vec<FStack<T>>funcstack;
     StackV<T> globalDecl;
 public:
     Table() {}
@@ -99,7 +99,7 @@ public:
         return !funcstack.empty();
     }
     
-    bool addInfo(std::string n, T Node, bool global = false) {
+    bool addInfo(ast::String n, T Node, bool global = false) {
         if(!global&&!funcstack.empty()) {
             funcstack.back().add(n,Node);
         }
@@ -110,7 +110,7 @@ public:
         return true;
     }
     
-    void updateGlobalInfo(std::string n, T Node) {
+    void updateGlobalInfo(ast::String n, T Node) {
         globalDecl.add(n, Node);
     }
 
@@ -118,9 +118,9 @@ public:
     inline FStack<T> getFuncTop() { return HasFunc()?funcstack.back():NULL; }
     
     
-    // Type* getGlobalFunc(std::string &n);
+    // Type* getGlobalFunc(ast::String &n);
     
-    bool Has(const std::string &n, bool Top = false) {
+    bool Has(const ast::String &n, bool Top = false) {
         if(!funcstack.empty()){
             if(funcstack.back().Has(n, Top)) {
                 return true;
@@ -132,7 +132,7 @@ public:
         return globalDecl.Has(n);
     }
 
-    T getInfo(const std::string &n, bool Top = false) {
+    T getInfo(const ast::String &n, bool Top = false) {
         if(!funcstack.empty()){
             T info = funcstack.back().getInfo(n, Top);
             if(info || Top){

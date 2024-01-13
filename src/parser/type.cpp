@@ -1,4 +1,4 @@
-#include"../../include/ResMgr.hpp"
+#include"../../include/Context.hpp"
 #include"../../include/parser/type.hpp"
 #include"../../include/Error.hpp"
 // #include"parser/type.hpp"
@@ -6,8 +6,8 @@ namespace ast {
 
 //////////////////////////////////StructType/////////////////////////////////////////
 
-bool StructType::UnaryOpMatch(lex::Tok op) {
-    if(op.getTokType() != lex::STAR && op.getTokType() != lex::AND) {
+bool StructType::UnaryOpMatch(Tok op) {
+    if(op.getTokType() != STAR && op.getTokType() != AND) {
         return false;
     }
     return true;
@@ -79,7 +79,7 @@ std::string StructType::toStr() noexcept {
     return "struct";
 }
 
-StructType *StructType::Create(ResourceMgr &mgr, const std::map<std::string, uint32_t>&_EleNameTypeList) {
+StructType *StructType::Create(Context &mgr, const std::map<std::string, uint32_t>&_EleNameTypeList) {
     return mgr.CreateTy<StructType>(_EleNameTypeList);
 }
 
@@ -88,10 +88,10 @@ StructType *StructType::Create(ResourceMgr &mgr, const std::map<std::string, uin
 
 
 
- bool IntType::UnaryOpMatch(lex::Tok op) {
+ bool IntType::UnaryOpMatch(Tok op) {
     switch (op.getTokType())
     {
-    case lex::MINUS:
+    case MINUS:
     {
         if(bit < 8){
             return false;
@@ -101,11 +101,11 @@ StructType *StructType::Create(ResourceMgr &mgr, const std::map<std::string, uin
         }
     }
     break;
-    case lex::STAR:
-    case lex::AND:
-    case lex::CND_NOT:
+    case STAR:
+    case AND:
+    case CND_NOT:
     break;
-    case lex::NOT:
+    case NOT:
     {
         if(bit >= 8){
             return false;
@@ -184,7 +184,7 @@ std::string IntType::toStr() noexcept {
     return str;
 }
 
-IntType *IntType::Create(ResourceMgr &mgr, uint16_t _bit, bool _isSign) {
+IntType *IntType::Create(Context &mgr, uint16_t _bit, bool _isSign) {
     return mgr.CreateTy<IntType>(_bit, _isSign);
 }
 
@@ -192,12 +192,12 @@ IntType *IntType::Create(ResourceMgr &mgr, uint16_t _bit, bool _isSign) {
  //////////////////////////////////FloatType/////////////////////////////////////////
 
 
- bool FloatType::UnaryOpMatch(lex::Tok op) {
+ bool FloatType::UnaryOpMatch(Tok op) {
     switch (op.getTokType())
     {
-    case lex::STAR:
-    case lex::AND:
-    case lex::MINUS:
+    case STAR:
+    case AND:
+    case MINUS:
     {
         return true;
     }
@@ -249,7 +249,7 @@ std::string FloatType::toStr() noexcept {
     return str;
 }
 
-FloatType *FloatType::Create(ResourceMgr &mgr, uint16_t _bit) {
+FloatType *FloatType::Create(Context &mgr, uint16_t _bit) {
     return mgr.CreateTy<FloatType>(_bit);
 }
 
@@ -257,14 +257,14 @@ FloatType *FloatType::Create(ResourceMgr &mgr, uint16_t _bit) {
  //////////////////////////////////PtrType/////////////////////////////////////////
 
 
- bool PointerType::UnaryOpMatch(lex::Tok op) {
-    if(op.getTokType() != lex::STAR && op.getTokType() != lex::AND){
+ bool PointerType::UnaryOpMatch(Tok op) {
+    if(op.getTokType() != STAR && op.getTokType() != AND){
         return false;
     }
     return true;
  }
 
- PointerType *PointerType::getPtrOf(ResourceMgr &mgr, int DefCount) {
+ PointerType *PointerType::getPtrOf(Context &mgr, int DefCount) {
     bool _mut;
     PointerType *Ty = Create(mgr, _mut, To);
     return Ty;
@@ -395,14 +395,14 @@ std::string PointerType::toStr() noexcept {
     return str;
 }
 
-PointerType *PointerType::Create(ResourceMgr &mgr, bool _mut, Type* _To) {
+PointerType *PointerType::Create(Context &mgr, bool _mut, Type* _To) {
     return mgr.CreateTy<PointerType>(_mut, _To);
 }
 
  ////////////////////////////////ArrayType/////////////////////////////////////////
 
- bool ArrayType::UnaryOpMatch(lex::Tok op) {
-    if(op.getTokType() != lex::STAR && op.getTokType() != lex::AND){
+ bool ArrayType::UnaryOpMatch(Tok op) {
+    if(op.getTokType() != STAR && op.getTokType() != AND){
         return false;
     }
     return true;
@@ -449,21 +449,21 @@ std::string ArrayType::toStr() noexcept {
     return str;
 }
 
-ArrayType *ArrayType::Create(ResourceMgr &mgr, Type *_Ty, size_t _Size) {
+ArrayType *ArrayType::Create(Context &mgr, Type *_Ty, size_t _Size) {
     return mgr.CreateTy<ArrayType>(_Ty, _Size);
 }
 
 ////////////////////////////////ArrayType/////////////////////////////////////////
 
 
-bool RefType::UnaryOpMatch(lex::Tok op) {
-    if(op.getTokType() != lex::STAR){
+bool RefType::UnaryOpMatch(Tok op) {
+    if(op.getTokType() != STAR){
         return false;
     }
     return true;
 }
 
-PointerType *RefType::getPtr(ResourceMgr &mgr) noexcept {
+PointerType *RefType::getPtr(Context &mgr) noexcept {
     return PointerType::Create(mgr, mut, To);
 }
 
@@ -475,18 +475,18 @@ bool RefType::IsCloneOf(Type *otherTo) {
         return false;
     }
     PointerType *ToPTy = static_cast<PointerType*>(otherTo);
-    // if(To->type() == PointerTy && ToPTy->getTo()->Is(PointerTy)){
-    //     // if((!mut && ToPTy->HasMut()) || (mut && !ToPTy->HasMut())){
-    //     //     return false;
-    //     // }
-    //     if(!(!mut ^ ToPTy->HasMut())){
-    //         return false;
-    //     }
+    if(To->type() == PointerTy && ToPTy->getTo()->Is(PointerTy)){
+        // if((!mut && ToPTy->HasMut()) || (mut && !ToPTy->HasMut())){
+        //     return false;
+        // }
+        if(!(!mut ^ ToPTy->HasMut())){
+            return false;
+        }
 
-    //     if(!To->IsCloneOf(ToPTy->getTo())){
-    //         return false;
-    //     }
-    // }else {
+        if(!To->IsCloneOf(ToPTy->getTo())){
+            return false;
+        }
+    }else {
         if(!To->IsCloneOf(ToPTy->getTo())){
             return false;
         }
@@ -496,7 +496,7 @@ bool RefType::IsCloneOf(Type *otherTo) {
         if(!(!mut ^ ToPTy->HasMut())){
             return false;
         }
-    // }
+    }
     return true;
 }
 
@@ -515,13 +515,13 @@ std::string RefType::toStr() noexcept {
     return str;
 }
 
-RefType *RefType::Create(ResourceMgr &mgr, Type* _To, bool _mut) {
+RefType *RefType::Create(Context &mgr, Type* _To, bool _mut) {
     return mgr.CreateTy<RefType>(_To, _mut);
 }
 
  ////////////////////////////////ArrayType/////////////////////////////////////////
 
-bool EnumType::UnaryOpMatch(lex::Tok op) {
+bool EnumType::UnaryOpMatch(Tok op) {
     return false;
 }
 
@@ -544,15 +544,15 @@ std::string EnumType::toStr() noexcept {
     return "enum";
 }
 
-EnumType *EnumType::Create(ResourceMgr &mgr, IntType *_ITy) {
+EnumType *EnumType::Create(Context &mgr, IntType *_ITy) {
     return mgr.CreateTy<EnumType>(_ITy);
 }
 
 
 //////////////////////////////////FunctionType/////////////////////////////////////////
 
-bool FunctionType::UnaryOpMatch(lex::Tok op) {
-    if(op.getTokType() != lex::STAR && op.getTokType() != lex::AND){
+bool FunctionType::UnaryOpMatch(Tok op) {
+    if(op.getTokType() != STAR && op.getTokType() != AND){
         return false;
     }
     return true;
@@ -602,7 +602,7 @@ std::string FunctionType::toStr() noexcept {
     return str;
 }
 
-FunctionType *FunctionType::Create(ResourceMgr &mgr, const std::vector<Type*>&_param, Type* _ret) {
+FunctionType *FunctionType::Create(Context &mgr, const std::vector<Type*>&_param, Type* _ret) {
     return mgr.CreateTy<FunctionType>(_param, _ret);
 }
 
@@ -615,7 +615,7 @@ bool ScopeTy::IsCloneOf(Type *To) {
     return false;
 }
 
-bool ScopeTy::UnaryOpMatch(lex::Tok op) {
+bool ScopeTy::UnaryOpMatch(Tok op) {
     return false;
 }
 
@@ -623,7 +623,7 @@ bool ScopeTy::IsCasteble(Type *To) {
     return false;
 }
 
-ScopeTy *ScopeTy::Create(ResourceMgr &mgr, Module *_mod) {
+ScopeTy *ScopeTy::Create(Context &mgr, Module *_mod) {
     return mgr.CreateTy<ScopeTy>(_mod);
 }
 
@@ -634,11 +634,11 @@ std::string ScopeTy::toStr() noexcept {
 
 //////////////////////////////////VoidType/////////////////////////////////////////
 
-VoidType *VoidType::Create(ResourceMgr &mgr) {
+VoidType *VoidType::Create(Context &mgr) {
     return mgr.CreateTy<VoidType>();
 }
 
-bool VoidType::UnaryOpMatch(lex::Tok op) {
+bool VoidType::UnaryOpMatch(Tok op) {
     return op.getTokType() == STAR;
 }
 

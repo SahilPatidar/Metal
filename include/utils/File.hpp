@@ -5,7 +5,7 @@
 
 namespace fs{
 
-bool get_src(std::string &_path, std::string &src);
+bool get_src(std::string &_path, std::string &src, bool is_mod = false);
 
 char* get_dir_name(std::string &path);
 

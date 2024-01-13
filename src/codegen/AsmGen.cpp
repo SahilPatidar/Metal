@@ -30,9 +30,17 @@
 #include "llvm/Transforms/Utils.h"
 
 
+// #include "clang/CodeGen/CodeGenAction.h"
+// #include "clang/Driver/Options.h"
+// #include "clang/Frontend/CompilerInvocation.h"
+// #include "clang/Frontend/TextDiagnosticBuffer.h"
+// #include "clang/Frontend/TextDiagnosticPrinter.h"
+// #include "clang/Driver/Driver.h"
+// #include "clang/Driver/Compilation.h"
+// #include "llvm/ADT/STLExtras.h"
+
+
 #include<iostream>
-
-
 
 
 namespace codegen {
@@ -64,9 +72,9 @@ void runOptimisingPasses(Module &TheModule) {
   llvm::Function *llvmMainFun = TheModule.getFunction(llvm::StringRef("main"));
   functionPassManager->run(*llvmMainFun);
 }
-void LLVMIRToAsm(Module &TheModule) {
+void LLVMIRToAsm(Module &TheModule, std::string filePath) {
   runOptimisingPasses(TheModule);
-    InitializeAllTargetInfos();
+  InitializeAllTargetInfos();
   InitializeAllTargets();
   InitializeAllTargetMCs();
   InitializeAllAsmParsers();
@@ -97,7 +105,9 @@ void LLVMIRToAsm(Module &TheModule) {
 
   TheModule.setDataLayout(TheTargetMachine->createDataLayout());
 
-  auto Filename = "../test/func.asm";
+  auto Filename = "out.asm";
+  // auto OutF = "out";
+  // auto Filename = "../test/func.asm";
   std::error_code EC;
   raw_fd_ostream dest(Filename, EC, sys::fs::OF_None);
 
@@ -108,15 +118,15 @@ void LLVMIRToAsm(Module &TheModule) {
 
   legacy::PassManager pass;
 
-  if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, llvm::CodeGenFileType::AssemblyFile)) {
+  if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, llvm::CodeGenFileType::CGFT_AssemblyFile)) {
     errs() << "TheTargetMachine can't emit a file of this type";
     return;
   }
 
   pass.run(TheModule);
   dest.flush();
-
   outs() << "Wrote " << Filename << "\n";
 }
+
 
 } // namespace codegen

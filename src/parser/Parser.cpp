@@ -31,7 +31,6 @@ bool Parser::parse(Ast *&tree) {
         default:
             break;
         } 
-        std::cout<<stmtId<<std::endl;
         if(stmtId.empty()){
             continue;
         }   
@@ -144,7 +143,7 @@ bool Parser::ParseBlock(ParserHelper &P, BlockStmt *&ResNode, bool IsTop){
             break;
         }
 
-        if(isSemiCol&&!P.checkn(SCOL)){
+        if(isSemiCol&&!P.CheckAndConsume(SCOL)){
             err::err_out(P.peek_l().getLoc(), "expected ';' found - ", P.peek_l().getStr());
             return false;
         }
@@ -165,11 +164,11 @@ bool Parser::ParseNewStmt(ParserHelper &P, Ast *&ResNode) {
     P.dump(__func__);
     ResNode = nullptr;
     Lexeme &Tok = P.peek_l();
-    if(!P.checkn(NEW)) {
+    if(!P.CheckAndConsume(NEW)) {
         err::err_out(P.peek_l().getLoc(), "expected 'new' found - ", P.peek_l().getStr());
         return false;
     }
-    if(!P.checkn(LPAREN)) {
+    if(!P.CheckAndConsume(LPAREN)) {
         err::err_out(P.peek_l().getLoc(), "expected '(' found - ", P.peek_l().getStr());
         return false;
     }
@@ -183,7 +182,7 @@ bool Parser::ParseNewStmt(ParserHelper &P, Ast *&ResNode) {
         return false;
     }
 
-    if(!P.checkn(COMMA)) {
+    if(!P.CheckAndConsume(COMMA)) {
         err::err_out(P.peek_l().getLoc(), "expected ',' found - ", P.peek_l().getStr());
         return false;
     }
@@ -193,7 +192,7 @@ bool Parser::ParseNewStmt(ParserHelper &P, Ast *&ResNode) {
         return false;
     }
 
-    if(!P.checkn(RPAREN)) {
+    if(!P.CheckAndConsume(RPAREN)) {
         err::err_out(P.peek_l().getLoc(), "expected '(' found - ", P.peek_l().getStr());
         return false;
     }
@@ -207,12 +206,12 @@ bool Parser::ParseDelStmt(ParserHelper &P, Ast *&ResNode) {
     P.dump(__func__);
     ResNode = nullptr;
     Lexeme &Tok = P.peek_l();
-    if(!P.checkn(DEL)) {
+    if(!P.CheckAndConsume(DEL)) {
         err::err_out(P.peek_l().getLoc(), "expected 'del' found - ", P.peek_l().getStr());
         return false;
     }
 
-    if(!P.checkn(LPAREN)) {
+    if(!P.CheckAndConsume(LPAREN)) {
         err::err_out(P.peek_l().getLoc(), "expected '(' found - ", P.peek_l().getStr());
         return false;
     }
@@ -226,7 +225,7 @@ bool Parser::ParseDelStmt(ParserHelper &P, Ast *&ResNode) {
         return false;
     }
 
-    if(!P.checkn(RPAREN)) {
+    if(!P.CheckAndConsume(RPAREN)) {
         err::err_out(P.peek_l().getLoc(), "expected '(' found - ", P.peek_l().getStr());
         return false;
     }
@@ -238,14 +237,14 @@ bool Parser::ParseDelStmt(ParserHelper &P, Ast *&ResNode) {
 
 bool Parser::ParseSubBlock(ParserHelper &P, BlockStmt *&ResNode) {
     P.dump(__func__);
-    if(!P.checkn(LBRACE)){
+    if(!P.CheckAndConsume(LBRACE)){
         err::err_out(P.peek_l().getLoc(), "expected '{' found - ", P.peek_l().getStr());
         return false;
     }
     if(!ParseBlock(P,ResNode)){
         return false;
     }
-    if(!P.checkn(RBRACE)){
+    if(!P.CheckAndConsume(RBRACE)){
         err::err_out(P.peek_l().getLoc(), "expected '}' found - ", P.peek_l().getStr());
         return false;
     }
@@ -271,12 +270,12 @@ bool Parser::ParseUseStmt(ParserHelper &P, Ast *&ResNode) {
     }
 
 
-    if(P.checkn(AS)) {
+    if(P.CheckAndConsume(AS)) {
         if(!P.check(IDEN)||!ParseIdentifier(P,ident)) {
             return false;
         }
 
-        path = Expression::Create(mgr, tok.getLoc(), path, ident, KAsExpr);
+        path = Expression::Create(mgr, tok.getLoc(), path, ident, Expression::KAsExpr);
     }
 
 
@@ -304,7 +303,7 @@ bool Parser::ParseMod(ParserHelper &P, Ast *&ResNode) {
     Module *M = ModuleHelper::CreateMod(mgr, P.peek_l().getStr(), modctx);
     ModuleHelper MH(M);
     if(M == nullptr){
-        err::err_out(P.peek_l().getLoc(), "mod aleardy build - ");
+        err::err_out(P.peek_l().getLoc(), "mod aleardy build - ", P.peek_l().getStr());
         return false;
     }
     if(!MH.LexSrc(mgr)){
@@ -315,7 +314,7 @@ bool Parser::ParseMod(ParserHelper &P, Ast *&ResNode) {
     }
         P.dump2(__func__);
     P.next();
-    if(!P.checkn(SCOL)){
+    if(!P.CheckAndConsume(SCOL)){
         err::err_out(P.peek_l().getLoc(), "expected ';' found - ", P.peek_l().getStr());
         return false;
     }
@@ -346,7 +345,7 @@ bool Parser::ParsePath(ParserHelper &P, Ast *&ResNode){
             err::err_out(P.peek_l().getLoc(), "invalid expression");
             return false;
         }
-        lhs = Expression::Create(mgr, op.getLoc(), lhs, op.getTok(), rhs, KPathExpr);
+        lhs = Expression::Create(mgr, op.getLoc(), lhs, op.getTok(), rhs, Expression::KPathExpr);
         rhs = nullptr;
     }
     ResNode = lhs;
@@ -372,7 +371,7 @@ bool Parser::ParseMethod(ParserHelper &P, Ast *&ResNode) {
         return false;
     }
 
-    if(!P.checkn(LBRACE)) {
+    if(!P.CheckAndConsume(LBRACE)) {
         err::err_out(P.peek_l().getLoc(), "expected '{' found - ", P.peek_l().getStr());
         return false;
     }
@@ -390,7 +389,7 @@ bool Parser::ParseMethod(ParserHelper &P, Ast *&ResNode) {
         Impl.push_back(fn);
     }
 
-    if(!P.checkn(RBRACE)) {
+    if(!P.CheckAndConsume(RBRACE)) {
         err::err_out(P.peek_l().getLoc(), "expected '}' found - ", P.peek_l().getStr());
         return false;
     }
@@ -449,7 +448,7 @@ bool Parser::ParseType(ParserHelper &P, Ast *&ResNode) {
     bool variadic = false;
     Ast* type = nullptr;
     Lexeme &tok = P.peek_l();
-    if(P.checkn(DOTDOT)) {
+    if(P.CheckAndConsume(DOTDOT)) {
         variadic = true;
     }
     switch(P.peek_tt()){
@@ -489,16 +488,16 @@ bool Parser::ParseType(ParserHelper &P, Ast *&ResNode) {
                         return false;
                     }
                     tys.push_back(ty);
-                    if(!P.checkn(COMMA)) {
+                    if(!P.CheckAndConsume(COMMA)) {
                         break;
                     }
                 }
-                if(!P.checkn(RPAREN)) {
+                if(!P.CheckAndConsume(RPAREN)) {
                     err::err_out(P.peek_l().getLoc(), "expected ')' found - ", P.peek_l().getStr());
                     return false;
                 }
                 Ast* ret = nullptr;
-                if(P.checkn(ARROW)){
+                if(P.CheckAndConsume(ARROW)){
                     if(ParseType(P, ret)){
                         ret = ret;
                     }
@@ -521,12 +520,12 @@ bool Parser::ParseType(ParserHelper &P, Ast *&ResNode) {
             Tok op = P.peek_t();
             P.next();
             bool mut = false;
-            if(P.checkn(MUT)){
+            if(P.CheckAndConsume(MUT)){
                 mut = true;
-            }else if(P.checkn(CONST)){
+            }else if(P.CheckAndConsume(CONST)){
                 mut = false;
             }else{
-                err::err_out(P.peek_l().getLoc(), "expected {'const', 'mut'} found ->");
+                err::err_out(P.peek_l().getLoc(), "expected {'const', 'mut'} found - ", P.peek_l().getStr());
                 return false;
             }
 
@@ -538,7 +537,7 @@ bool Parser::ParseType(ParserHelper &P, Ast *&ResNode) {
             break;
         break;
         default:
-            err::err_out(P.peek_l().getLoc(), "expected '{type, i8, i32, ...}' found -");
+            err::err_out(P.peek_l().getLoc(), "expected '{type, i8, i32, ...}' found - ", P.peek_l().getStr());
             return false;
     }
     ResNode = type;
@@ -555,18 +554,18 @@ bool Parser::ParseArrayType(ParserHelper &P, Ast *&ResNode) {
     Ast *size;
     P.next();
     if(P.check(RBRACK)) {
-        err::err_out(P.peek_l().getLoc(), "expected ']' found ->");
+        err::err_out(P.peek_l().getLoc(), "expected ']' found - ", P.peek_l().getStr());
         return false;
     }
     if(!P.check(IDEN)&&!P.check(INT)) {
-        err::err_out(P.peek_l().getLoc(), "expected expression found -");
+        err::err_out(P.peek_l().getLoc(), "expected expression found - ", P.peek_l().getStr());
         return false;
     }
     if(!ParseExpr(P, size)) {
         return false;
     }
-    if(!P.checkn(RBRACK)) {
-        err::err_out(P.peek_l().getLoc(), "expected ']' found ->");
+    if(!P.CheckAndConsume(RBRACK)) {
+        err::err_out(P.peek_l().getLoc(), "expected ']' found - ", P.peek_l().getStr());
         return false;
     }
     if(!ParseType(P,basety)){
@@ -585,7 +584,7 @@ bool Parser::ParseCall(ParserHelper &P, Ast *&ResNode) {
     ResNode = nullptr;
     std::vector<Ast*>args;
 
-    if(!P.checkn(LPAREN)){
+    if(!P.CheckAndConsume(LPAREN)){
         err::err_out(P.peek_l().getLoc(), "expected '(' found - ", P.peek_l().getStr());
         return false;
     }
@@ -601,12 +600,12 @@ bool Parser::ParseCall(ParserHelper &P, Ast *&ResNode) {
             return false;
         }
 
-        if(!P.checkn(COMMA)) {
+        if(!P.CheckAndConsume(COMMA)) {
             break;
         }
     }
 
-    if(!P.checkn(RPAREN)){
+    if(!P.CheckAndConsume(RPAREN)){
         err::err_out(P.peek_l().getLoc(), "expected ')' found - ", P.peek_l().getStr());
         return false;
     }
@@ -629,11 +628,11 @@ bool Parser::ParseListExpr(ParserHelper &P, Ast *&ResNode) {
             return false;
         }
         List.push_back(expr);
-        if(!P.checkn(COMMA)){
+        if(!P.CheckAndConsume(COMMA)){
             break;
         }
     }
-    if(!P.checkn(RBRACK)){
+    if(!P.CheckAndConsume(RBRACK)){
         err::err_out(P.peek_l().getLoc(), "expected ']' found - ", P.peek_l().getStr());
         return false;
     }
@@ -681,10 +680,10 @@ bool Parser::ParseExpr1(ParserHelper &P, Ast *&ResNode, int Precedance) {
             return false;
         }
         if(right == nullptr){
-            err::err_out(P.peek_l().getLoc(), "invalid expression - ");
+            err::err_out(P.peek_l().getLoc(), "invalid expression - ", P.peek_l().getStr());
             return false;
         }
-        left = Expression::Create(mgr, tok.getLoc(), left, opr, right, KBinaryExpr);
+        left = Expression::Create(mgr, tok.getLoc(), left, opr, right, Expression::KBinaryExpr);
         right = nullptr;
     }
     ResNode = left;
@@ -705,7 +704,7 @@ bool Parser::ParseExpr2(ParserHelper &P, Ast *&ResNode) {
     Lexeme &tok = P.peek_l();
     if(P.check(IS)) {
          if(!LHS){
-            err::err_out(P.peek_l().getLoc(), "invalid expression - ");
+            err::err_out(P.peek_l().getLoc(), "invalid expression - ", P.peek_l().getStr());
             return false;
         }
         Tok op = P.peek_t();
@@ -717,15 +716,15 @@ bool Parser::ParseExpr2(ParserHelper &P, Ast *&ResNode) {
             err::err_out(P.peek_l().getLoc(), "invalid expression");
             return false;
         }
-        LHS = Expression::Create(mgr, tok.getLoc(), LHS, op, RHS, KIsExpr);
+        LHS = Expression::Create(mgr, tok.getLoc(), LHS, op, RHS, Expression::KIsExpr);
     }
     if(P.check(AS)) {
          if(!LHS){
-            err::err_out(P.peek_l().getLoc(), "invalid expression - ");
+            err::err_out(P.peek_l().getLoc(), "invalid expression - ", P.peek_l().getStr());
             return false;
         }
         Tok op = P.peek_t();
-        while(P.checkn(AS)){
+        while(P.CheckAndConsume(AS)){
             RHS = nullptr;
             if(!ParseType(P, RHS)){
                 return false;
@@ -734,7 +733,7 @@ bool Parser::ParseExpr2(ParserHelper &P, Ast *&ResNode) {
                 err::err_out(P.peek_l().getLoc(), "invalid expression");
                 return false;
             }
-            LHS = Expression::Create(mgr, tok.getLoc(), LHS,op,RHS, KAsExpr);
+            LHS = Expression::Create(mgr, tok.getLoc(), LHS,op,RHS, Expression::KAsExpr);
         }
     }
     ResNode = LHS;
@@ -764,7 +763,7 @@ bool Parser::ParseExpr3(ParserHelper &P, Ast *&ResNode) {
         return false;
     }
     if(!RHS){
-        err::err_out(P.peek_l().getLoc(), "invalid expression - ");
+        err::err_out(P.peek_l().getLoc(), "invalid expression - ", P.peek_l().getStr());
 		return false;
     }
     if(opr.empty()){
@@ -809,7 +808,7 @@ bool Parser::ParseExtern(ParserHelper &P, Ast *&ResNode) {
     Lexeme &Tok = P.peek_l();
     P.next();
     bool isFn = P.check(FN);
-    if(!P.checkn(FN) && !P.checkn(STRUCT)) {
+    if(!P.CheckAndConsume(FN) && !P.CheckAndConsume(STRUCT)) {
         err::err_out(P.peek_l().getLoc(), "expected '{fn, struct}' found - ", P.peek_l().getStr());
         return false;
     }
@@ -843,6 +842,7 @@ bool Parser::ParseExtFnCall(ParserHelper &P, Ast *&ResNode) {
         if(!ParseType(P, Ty)){
             return false;
         }
+        
         P.next();
         Field = FieldExpr::Create(mgr, P.peek_l().getLoc(), {Ty});
     }else
@@ -850,7 +850,7 @@ bool Parser::ParseExtFnCall(ParserHelper &P, Ast *&ResNode) {
             return false;
         }
 
-    ResNode = Expression::Create(mgr, tok.getLoc(), Ident, Field, KExtCallExpr);
+    ResNode = Expression::Create(mgr, tok.getLoc(), Ident, Field, Expression::KExtCallExpr);
     return true;
 }
 
@@ -866,7 +866,7 @@ bool Parser::ParseExpression(ParserHelper &P, Ast *&ResNode) {
         }
         goto end;
     }
-    if(P.checkn(AT)) {
+    if(P.CheckAndConsume(AT)) {
         if(!ParseExtFnCall(P, lhs)) {
             return false;
         } 
@@ -909,7 +909,7 @@ ident:
         if(!ParseIdentifier(P,rhs)){
             return false;
         }
-        lhs = Expression::Create(mgr, tok.getLoc(), lhs, opr, rhs, KPathExpr);
+        lhs = Expression::Create(mgr, tok.getLoc(), lhs, opr, rhs, Expression::KPathExpr);
         rhs = nullptr;
     }
 
@@ -927,7 +927,7 @@ struct_init:
     if(!ParseStructExpr(P,rhs)) {
         return false;
     }
-    lhs = Expression::Create(mgr, tok.getLoc(),lhs, rhs, KStructExpr);
+    lhs = Expression::Create(mgr, tok.getLoc(),lhs, rhs, Expression::KStructExpr);
     rhs = nullptr;
     goto end;
 
@@ -941,7 +941,7 @@ dot_arrow:
         if(!ParseIdentifier(P,rhs)){
             return false;
         }
-        lhs = Expression::Create(mgr, tok.getLoc(), lhs, opr, rhs, KMemExpr);
+        lhs = Expression::Create(mgr, tok.getLoc(), lhs, opr, rhs, Expression::KMemExpr);
         rhs = nullptr;
     }
 
@@ -955,14 +955,14 @@ call_or_idx:
         if(!ParseCall(P,rhs)) {
             return false;
         }
-        lhs = Expression::Create(mgr, tok.getLoc(),lhs, rhs, KCallExpr);
+        lhs = Expression::Create(mgr, tok.getLoc(),lhs, rhs, Expression::KCallExpr);
     }
 
     while(P.check(LBRACK)){
         if(!ParseArrayIndexExpr(P,rhs)){
             return false;
         }
-        lhs = Expression::Create(mgr, tok.getLoc(),lhs, rhs, KIndexExpr);
+        lhs = Expression::Create(mgr, tok.getLoc(),lhs, rhs, Expression::KIndexExpr);
     }
  
     if(P.check(DOT)||P.check(ARROW)){
@@ -970,6 +970,9 @@ call_or_idx:
     }
 end:
     ResNode = lhs;
+    if(!ResNode) {
+
+    }
     P.dump2(__func__);
     return true;
 }
@@ -1024,7 +1027,7 @@ bool Parser::ParseParenExpr(ParserHelper &P, Ast *&ResNode) {
         return false;
     }
 
-    if(!P.checkn(RPAREN)){
+    if(!P.CheckAndConsume(RPAREN)){
         err::err_out(P.peek_l().getLoc(), "expected ')' found - ", P.peek_l().getStr());
         return false;
     } 
@@ -1066,7 +1069,7 @@ bool Parser::ParseStructExpr(ParserHelper &P, Ast *&ResNode) {
     ResNode =  nullptr;
     std::vector<Ast*> Vals;
 
-    if(!P.checkn(LBRACE)){
+    if(!P.CheckAndConsume(LBRACE)){
         err::err_out(P.peek_l().getLoc(), "expected '{' found - ", P.peek_l().getStr());
         return false;
     }
@@ -1081,7 +1084,7 @@ bool Parser::ParseStructExpr(ParserHelper &P, Ast *&ResNode) {
         }
         Lexeme &var = P.peek_l();
         P.next();
-        if(!P.checkn(COL)){
+        if(!P.CheckAndConsume(COL)){
             err::err_out(P.peek_l().getLoc(), "expected ':' found - ", P.peek_l().getStr());
             return false;
         }
@@ -1092,12 +1095,12 @@ bool Parser::ParseStructExpr(ParserHelper &P, Ast *&ResNode) {
             return false;
         }
         Vals.push_back(VarStmt::Create(mgr, tok.getLoc(), var, nullptr, expr, false));
-        if(!P.checkn(COMMA)){
+        if(!P.CheckAndConsume(COMMA)){
             break;
         }
     }
 
-    if(!P.checkn(RBRACE)) {
+    if(!P.CheckAndConsume(RBRACE)) {
         err::err_out(P.peek_l().getLoc(), "expected '}' found - ", P.peek_l().getStr());
         return false;
     }
@@ -1113,7 +1116,7 @@ bool Parser::ParseArrayIndexExpr(ParserHelper &P, Ast *&ResNode) {
     ResNode = nullptr;
     Ast *IndexVal = nullptr;
 
-    if(!P.checkn(LBRACK)){
+    if(!P.CheckAndConsume(LBRACK)){
         err::err_out(P.peek_l().getLoc(), "expected '[' found - ", P.peek_l().getStr());
         return false;
     }
@@ -1127,7 +1130,7 @@ bool Parser::ParseArrayIndexExpr(ParserHelper &P, Ast *&ResNode) {
         return false;
     }
 
-    if(!P.checkn(RBRACK)){
+    if(!P.CheckAndConsume(RBRACK)){
         err::err_out(P.peek_l().getLoc(), "expected ']' found - ", P.peek_l().getStr());
         return false;
     }
@@ -1150,7 +1153,7 @@ bool Parser::ParseSpecificType(ParserHelper &P, Ast *&ResNode) {
     }
 
     if(!P.check(IDEN)){
-        err::err_out(P.peek_l().getLoc(), "expected 'identifier' found -");
+        err::err_out(P.peek_l().getLoc(), "expected 'identifier' found - ", P.peek_l().getStr());
         return false;
     }
     expr = Identifier::Create(mgr, tok.getLoc(), P.peek_l(), true);
@@ -1166,18 +1169,18 @@ bool Parser::ParseEnumStmt(ParserHelper &P, Ast *&ResNode) {
     ResNode = nullptr;
     Lexeme &tok = P.peek_l();
     std::vector<VarStmt*>Evals;
-    if(!P.checkn(ENUM)){
-        err::err_out(P.peek_l().getLoc(), "expected 'enum' keyword found -");
+    if(!P.CheckAndConsume(ENUM)){
+        err::err_out(P.peek_l().getLoc(), "expected 'enum' keyword found - ", P.peek_l().getStr());
         return false;
     }
     if(!P.check(IDEN)) {
-        err::err_out(P.peek_l().getLoc(), "expected 'identifier' found -");
+        err::err_out(P.peek_l().getLoc(), "expected 'identifier' found - ", P.peek_l().getStr());
         return false;
     }
     Lexeme &Name = P.peek_l();
     P.next();
     Ast *Ty = nullptr;
-    if(P.checkn(COL)) {
+    if(P.CheckAndConsume(COL)) {
         if(!ParseType(P, Ty)) {
             return false;
         }
@@ -1185,7 +1188,7 @@ bool Parser::ParseEnumStmt(ParserHelper &P, Ast *&ResNode) {
         Ty = PremitiveType::Create(mgr, P.peek_l().getLoc(), Lexeme(P.peek_l().getLoc(), "i32", I32));
     }
 
-    if(!P.checkn(LBRACE)){
+    if(!P.CheckAndConsume(LBRACE)){
         err::err_out(P.peek_l().getLoc(), "expected '{' found - ", P.peek_l().getStr());
         return false;
     }
@@ -1198,7 +1201,7 @@ bool Parser::ParseEnumStmt(ParserHelper &P, Ast *&ResNode) {
         Lexeme &Var = P.peek_l();
         P.next();
         Ast* Val = nullptr;
-        if(P.checkn(ASN)){
+        if(P.CheckAndConsume(ASN)){
             if(!ParseExpr(P, Val)){
                 return false;
             }
@@ -1208,12 +1211,12 @@ bool Parser::ParseEnumStmt(ParserHelper &P, Ast *&ResNode) {
             }
         }
         Evals.push_back(VarStmt::Create(mgr, tok.getLoc(), Var, Ty, Val, _CONST));
-        if(!P.checkn(COMMA)){
+        if(!P.CheckAndConsume(COMMA)){
             break;
         }
     }
 
-    if(!P.checkn(RBRACE)){
+    if(!P.CheckAndConsume(RBRACE)){
         err::err_out(P.peek_l().getLoc(), "expected '}' found - ", P.peek_l().getStr());
         return false;
     }
@@ -1228,20 +1231,20 @@ bool Parser::ParseStructStmt(ParserHelper &P, Ast *&ResNode) {
     ResNode = nullptr;
     Lexeme &tok = P.peek_l();
     std::vector<VarStmt*> field;
-    if(!P.checkn(STRUCT)) {
-        err::err_out(P.peek_l().getLoc(), "expected keyword 'struct' found ->");
+    if(!P.CheckAndConsume(STRUCT)) {
+        err::err_out(P.peek_l().getLoc(), "expected keyword 'struct' found - ", P.peek_l().getStr());
         return false;
     }
 
     if(!P.check(IDEN)) {
-        err::err_out(P.peek_l().getLoc(), "expected 'identifier' found ->");
+        err::err_out(P.peek_l().getLoc(), "expected 'identifier' found - ", P.peek_l().getStr());
         return false;
     }
     const Lexeme &ident = P.peek_l();
     P.next();
 
 
-    if(!P.checkn(LBRACE)){
+    if(!P.CheckAndConsume(LBRACE)){
         err::err_out(P.peek_l().getLoc(), "expected field expression '{' found - ", P.peek_l().getStr());
         return false;
     }
@@ -1263,12 +1266,12 @@ bool Parser::ParseStructStmt(ParserHelper &P, Ast *&ResNode) {
             return false;
         }
         field.push_back(VarStmt::Create(mgr, tok.getLoc(), var, ty, nullptr, mask));
-        if(!P.checkn(COMMA)){
+        if(!P.CheckAndConsume(COMMA)){
             break;
         }
     }
 
-    if(!P.checkn(RBRACE)){
+    if(!P.CheckAndConsume(RBRACE)){
         err::err_out(P.peek_l().getLoc(), "expected '}' found - ", P.peek_l().getStr());
         return false;
     }
@@ -1290,7 +1293,7 @@ bool Parser::ParseFuncDef(ParserHelper &P, Ast *&ResNode) {
     Ast* retval = nullptr;
     BlockStmt* Block = nullptr;
     int mask = 0;
-    if(!P.checkn(FN)) {
+    if(!P.CheckAndConsume(FN)) {
         err::err_out(P.peek_l().getLoc(), "expected keyword 'fn' found ->\'");
         return false;
     }
@@ -1301,7 +1304,7 @@ bool Parser::ParseFuncDef(ParserHelper &P, Ast *&ResNode) {
     Lexeme &name = P.peek_l();
     P.next();
 
-    if(!P.checkn(LPAREN)) {
+    if(!P.CheckAndConsume(LPAREN)) {
         err::err_out(P.peek_l().getLoc(), "expected function expression (parameters : type) found - ", P.peek_l().getStr());
         return false;
     }
@@ -1309,12 +1312,12 @@ bool Parser::ParseFuncDef(ParserHelper &P, Ast *&ResNode) {
     if( P.check(SELF) || (P.check(MUT) && P.checkh(SELF))) {
         int8_t mask = _FVAR;
         bool isSelf = false;
-        if(P.checkn(MUT)) {
+        if(P.CheckAndConsume(MUT)) {
             mask |= _MUT;
         }
         
         Lexeme &ident = P.peek_l();
-        if(P.checkn(SELF)) {
+        if(P.CheckAndConsume(SELF)) {
             isSelf = true;
         }
 
@@ -1323,11 +1326,11 @@ bool Parser::ParseFuncDef(ParserHelper &P, Ast *&ResNode) {
             return false;
         }
         param.push_back(VarStmt::Create(mgr, ident.getLoc(), ident, ty, nullptr, mask));
-        P.checkn(COMMA);
+        P.CheckAndConsume(COMMA);
     }
     while(P.check(IDEN) || P.check(MUT)) {
         int8_t mask = _FVAR;
-        if(P.checkn(MUT)) {
+        if(P.CheckAndConsume(MUT)) {
             mask |= _MUT;
         }
 
@@ -1346,18 +1349,18 @@ bool Parser::ParseFuncDef(ParserHelper &P, Ast *&ResNode) {
 
         param.push_back(VarStmt::Create(mgr, ident.getLoc(), ident, ty, nullptr, mask));
         
-        if(!P.checkn(COMMA)) {
+        if(!P.CheckAndConsume(COMMA)) {
             break;
         }
 
     }
 
-    if(!P.checkn(RPAREN)){
+    if(!P.CheckAndConsume(RPAREN)){
         err::err_out(P.peek_l().getLoc(), "expected ')' found - ", P.peek_l().getStr());
         return false;
     }
 
-    if(P.checkn(ARROW)){
+    if(P.CheckAndConsume(ARROW)){
         if(!ParseType(P, retval)){
             err::err_out(P.peek_l().getLoc(), "expected 'type' found - ", P.peek_l().getStr());
             return false;
@@ -1383,7 +1386,7 @@ bool Parser::ParseIfStmt(ParserHelper &P, Ast *&ResNode) {
     P.dump(__func__);
     ResNode = nullptr;
     Lexeme &tok = P.peek_l();
-    if(!P.checkn(IF)){
+    if(!P.CheckAndConsume(IF)){
         err::err_out(P.peek_l().getLoc(), "expected 'if' found - ", P.peek_l().getStr());   
         return false;
     }
@@ -1405,7 +1408,7 @@ bool Parser::ParseIfStmt(ParserHelper &P, Ast *&ResNode) {
     }
 
 
-    if(P.checkn(ELSE)) {
+    if(P.CheckAndConsume(ELSE)) {
         switch(P.peek_tt()){
             case IF:
                 if(!ParseIfStmt(P,else_)){
@@ -1422,7 +1425,7 @@ bool Parser::ParseIfStmt(ParserHelper &P, Ast *&ResNode) {
             }
                 break;
             default:
-                err::err_out(P.peek_l().getLoc(), "invalid else expression - ");
+                err::err_out(P.peek_l().getLoc(), "invalid else expression - ", P.peek_l().getStr());
                 return false;
 
         }
@@ -1441,12 +1444,12 @@ bool Parser::ParseForStmt(ParserHelper &P, Ast *&ResNode){
     Ast* cond = nullptr;
     Ast* incr = nullptr;
     BlockStmt* body = nullptr;
-    if(!P.checkn(FOR)) {
+    if(!P.CheckAndConsume(FOR)) {
         err::err_out(P.peek_l().getLoc(), "expected keyword 'for' found - ", P.peek_l().getStr());
         return false;
     }
 
-    if(P.checkn(SCOL)){
+    if(P.CheckAndConsume(SCOL)){
         goto cond;
     }
     if(P.check(LET)){
@@ -1459,19 +1462,19 @@ bool Parser::ParseForStmt(ParserHelper &P, Ast *&ResNode){
         }
     }
     
-    if(!P.checkn(SCOL)){
+    if(!P.CheckAndConsume(SCOL)){
         err::err_out(P.peek_l().getLoc(), "expected for expression ';' found - ", P.peek_l().getStr());
         return false;
     }
 cond:
-    if(P.checkn(SCOL)){
+    if(P.CheckAndConsume(SCOL)){
         goto incr;
     }
     if(!ParseExpr(P, cond)){
         return false;
     }
 
-    if(!P.checkn(SCOL)){
+    if(!P.CheckAndConsume(SCOL)){
         err::err_out(P.peek_l().getLoc(), "expected for expression ';' found - ", P.peek_l().getStr());
         return false;
     }
@@ -1509,16 +1512,16 @@ bool Parser::ParseForInStmt(ParserHelper &P, Ast *&ResNode) {
     BlockStmt* body = nullptr;
     bool isLet = false;
     // bool isBrace = true;
-    if(!P.checkn(FOR)) {
+    if(!P.CheckAndConsume(FOR)) {
         err::err_out(P.peek_l().getLoc(), "expected keyword 'for' found - ", P.peek_l().getStr());
         return false;
     }
 
-    // if(P.checkn(LET)){
+    // if(P.CheckAndConsume(LET)){
     //     isLet = true;
     // }
     
-    // if(isLet && !P.checkn(MUT)) {
+    // if(isLet && !P.CheckAndConsume(MUT)) {
     //     err::err_out(P.peek_l().getLoc(), "expected keyword mut found - ", P.peek_l().getStr());
     //     return false;
     // }
@@ -1531,7 +1534,7 @@ bool Parser::ParseForInStmt(ParserHelper &P, Ast *&ResNode) {
     Lexeme &var_tok = P.peek_l();
     P.next();
 
-    if(!P.checkn(IN)){
+    if(!P.CheckAndConsume(IN)){
         err::err_out(P.peek_l().getLoc(), "expected keyword 'in' found - ", P.peek_l().getStr());
         return false;
     }
@@ -1547,7 +1550,7 @@ bool Parser::ParseForInStmt(ParserHelper &P, Ast *&ResNode) {
         return false;
     }
 
-    if(P.checkn(DOTDOT)){
+    if(P.CheckAndConsume(DOTDOT)){
 
     // if(P.check(INT)) {
         Ast *from = in;
@@ -1556,7 +1559,7 @@ bool Parser::ParseForInStmt(ParserHelper &P, Ast *&ResNode) {
         // from = NumericLiteral::Create(mgr, tok.getLoc(), P.peek_l());
         // P.next();
 
-        // if(!P.checkn(DOTDOT)){
+        // if(!P.CheckAndConsume(DOTDOT)){
         //     err::err_out(P.peek_l().getLoc(), "expected for-in expression '..' found - ", P.peek_l().getStr());
         //     return false;
         // }
@@ -1571,7 +1574,7 @@ bool Parser::ParseForInStmt(ParserHelper &P, Ast *&ResNode) {
             return false;
         }
 
-        if(P.checkn(DOTDOT)){
+        if(P.CheckAndConsume(DOTDOT)){
             // if(!P.check(INT)){
             //     err::err_out(P.peek_l().getLoc(), "expected for-in expression integer after '..' found - ", P.peek_l().getStr());
             //     return false;
@@ -1595,8 +1598,8 @@ bool Parser::ParseForInStmt(ParserHelper &P, Ast *&ResNode) {
         Identifier *ident = Identifier::Create(mgr, tok.getLoc(), var_tok);
 
         var = VarStmt::Create(mgr, tok.getLoc(), var_tok, nullptr, from, _MUT);
-        cond = Expression::Create(mgr, tok.getLoc(), ident, LT, to,KBinaryExpr);
-        incr = Expression::Create(mgr, tok.getLoc(), ident, ASN_PLUS, intlit,KBinaryExpr);
+        cond = Expression::Create(mgr, tok.getLoc(), ident, LT, to, Expression::KBinaryExpr);
+        incr = Expression::Create(mgr, tok.getLoc(), ident, ASN_PLUS, intlit, Expression::KBinaryExpr);
         ResNode = ForLoop::Create(mgr, tok.getLoc(), var, cond, incr, body);
         return true; 
 
@@ -1629,28 +1632,28 @@ bool Parser::ParseForInStmt(ParserHelper &P, Ast *&ResNode) {
         VarStmt* iter_decl = VarStmt::Create(mgr, tok.getLoc(), iter_var_tok, nullptr, in, _MUT);
     
         FieldExpr* begin_call_args = FieldExpr::Create(mgr, tok.getLoc(), {});
-        Expression* begin_call = Expression::Create(mgr, tok.getLoc(), iter_begin_Iden, begin_call_args, KCallExpr);
-        Expression* iter_dot_begin_call = Expression::Create(mgr, tok.getLoc(), iter_var_ident, DOT, begin_call, KMemExpr);
+        Expression* begin_call = Expression::Create(mgr, tok.getLoc(), iter_begin_Iden, begin_call_args, Expression::KCallExpr);
+        Expression* iter_dot_begin_call = Expression::Create(mgr, tok.getLoc(), iter_var_ident, DOT, begin_call, Expression::KMemExpr);
         var = VarStmt::Create(mgr, tok.getLoc(), iter__tempvar__tok, nullptr, iter_dot_begin_call, _MUT);
 
         ///<_temp> != <iterVar.end()>
         FieldExpr* end_call_args = FieldExpr::Create(mgr, tok.getLoc(), {});
-        Expression* end_call = Expression::Create(mgr, tok.getLoc(), iter_end_Iden, end_call_args, KCallExpr);
-        Ast* iter_end_call = Expression::Create(mgr, tok.getLoc(), iter_var_ident, DOT, end_call, KMemExpr);
-        cond = Expression::Create(mgr, tok.getLoc(), iter_tempvar_ident, NEQL, iter_end_call, KBinaryExpr);
+        Expression* end_call = Expression::Create(mgr, tok.getLoc(), iter_end_Iden, end_call_args, Expression::KCallExpr);
+        Ast* iter_end_call = Expression::Create(mgr, tok.getLoc(), iter_var_ident, DOT, end_call, Expression::KMemExpr);
+        cond = Expression::Create(mgr, tok.getLoc(), iter_tempvar_ident, NEQL, iter_end_call, Expression::KBinaryExpr);
 
 
         ///<iterVar.next(_temp)>
         FieldExpr* nextcall_args = FieldExpr::Create(mgr, tok.getLoc(), {iter_tempvar_ident});
-        Expression* nextcall = Expression::Create(mgr, tok.getLoc(), iter_next_Iden, nextcall_args, KCallExpr);
-        Expression* iternext = Expression::Create(mgr, tok.getLoc(), iter_var_ident, DOT, nextcall, KMemExpr);
-        incr = Expression::Create(mgr, tok.getLoc(), iter_tempvar_ident, ASN, iternext, KBinaryExpr);
+        Expression* nextcall = Expression::Create(mgr, tok.getLoc(), iter_next_Iden, nextcall_args, Expression::KCallExpr);
+        Expression* iternext = Expression::Create(mgr, tok.getLoc(), iter_var_ident, DOT, nextcall, Expression::KMemExpr);
+        incr = Expression::Create(mgr, tok.getLoc(), iter_tempvar_ident, ASN, iternext, Expression::KBinaryExpr);
 
 
         ///<var = _iterVar.at()>
         FieldExpr* at_call_args = FieldExpr::Create(mgr, tok.getLoc(), {iter_tempvar_ident});
-        Expression* at_call = Expression::Create(mgr, tok.getLoc(), iter_at_Iden, at_call_args, KCallExpr);
-        Expression* iter_at_call = Expression::Create(mgr, tok.getLoc(), iter_var_ident, DOT, at_call, KMemExpr);
+        Expression* at_call = Expression::Create(mgr, tok.getLoc(), iter_at_Iden, at_call_args, Expression::KCallExpr);
+        Expression* iter_at_call = Expression::Create(mgr, tok.getLoc(), iter_var_ident, DOT, at_call, Expression::KMemExpr);
         VarStmt* inside_loop_var_decl = VarStmt::Create(mgr, tok.getLoc(), var_tok, nullptr, iter_at_call, _MUT);
 
         
@@ -1677,9 +1680,9 @@ bool Parser::ParseVarStmt(ParserHelper &P, Ast *&ResNode) {
     int8_t mask = 0;
 
     Lexeme &tok = P.peek_l();
-    if(P.checkn(LET)){
+    if(P.CheckAndConsume(LET)){
         isLet = true;
-    }else if(P.checkn(CONST)){
+    }else if(P.CheckAndConsume(CONST)){
         isConst = true;
         mask |= _CONST;
     }else{
@@ -1687,10 +1690,10 @@ bool Parser::ParseVarStmt(ParserHelper &P, Ast *&ResNode) {
         return false;
     }
     if(isConst&&P.check(MUT)){
-        err::err_out(P.peek_l().getLoc(), "const cannot be used with - ");
+        err::err_out(P.peek_l().getLoc(), "const cannot be used with - ", P.peek_l().getStr());
         return false;
     }
-    if(P.checkn(MUT))
+    if(P.CheckAndConsume(MUT))
         mask |= _MUT;
 
     if(!P.check(IDEN)){
@@ -1722,7 +1725,7 @@ val:
         err::err_out(P.peek_l().getLoc(), "invalid variable declaration - didn't initialized");
         return false;
     }
-    if(!P.checkn(ASN)){
+    if(!P.CheckAndConsume(ASN)){
         goto done;
     }
     isval = true;
@@ -1739,12 +1742,12 @@ done:
 check:
     if(isConst) {
         if(!isval) {
-            err::err_out(P.peek_l().getLoc(), "free constant item without body - ");
+            err::err_out(P.peek_l().getLoc(), "free constant item without body - ", P.peek_l().getStr());
     
             return false;
         }
         if(!isty) {
-            err::err_out(P.peek_l().getLoc(), "missing type for `const` item - ");
+            err::err_out(P.peek_l().getLoc(), "missing type for `const` item - ", P.peek_l().getStr());
     
             return false;
         }

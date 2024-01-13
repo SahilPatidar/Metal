@@ -1,6 +1,6 @@
 #pragma once
 #include<map>
-#include"../ResMgr.hpp"
+#include"../Context.hpp"
 // #include"../parser/type.hpp"
 // #include"../lex/lex.hpp"
 
@@ -31,7 +31,7 @@ public:
 
     inline bool Is(const ValID val) const noexcept { return val == vty; }
     inline ValID getValTy() const noexcept { return vty; }
-    virtual VALUE* clone(ResourceMgr &mgr) noexcept = 0;
+    virtual VALUE* clone(Context &mgr) noexcept = 0;
     virtual bool updateValue(VALUE *val) = 0;
 
 protected:
@@ -46,25 +46,25 @@ public:
     :VALUE(vty), val(_val) {}
     ~IntVal() {}
 
-    static IntVal *Create(ResourceMgr &mgr, int64_t _val, ValID vty = VInt);
-    VALUE* clone(ResourceMgr &mgr) noexcept;
+    static IntVal *Create(Context &mgr, int64_t _val, ValID vty = VInt);
+    VALUE* clone(Context &mgr) noexcept;
     bool updateValue(VALUE *_val);
     void updateValue(int64_t _val) noexcept { val = _val; }
     inline int64_t getVal() noexcept { return val; }
 };
 
 class FltVal: public VALUE {
-    double val;
+    long double val;
     public:
-    FltVal(double &_val)
+    FltVal(long double &_val)
     :VALUE(ValID::VFlt), val(_val) {}
     ~FltVal(){}
 
-    static FltVal *Create(ResourceMgr &mgr, double _val);
-    VALUE* clone(ResourceMgr &mgr) noexcept;
+    static FltVal *Create(Context &mgr, long double _val);
+    VALUE* clone(Context &mgr) noexcept;
     bool updateValue(VALUE *_val);
-    void updateValue(double _val) noexcept { val = _val; }
-    inline double getVal() noexcept { return val; }
+    void updateValue(long double _val) noexcept { val = _val; }
+    inline long double getVal() noexcept { return val; }
 };
 
 // class TyVal: public VALUE {
@@ -98,25 +98,25 @@ public:
     ArrayVal(std::vector<VALUE*>&_vals)
     :VALUE(ValID::VArray), vals(_vals) {}
     ~ArrayVal(){}
-    static ArrayVal *Create(ResourceMgr &mgr, const std::vector<VALUE*>&_vals); 
-    VALUE* clone(ResourceMgr &mgr) noexcept;
+    static ArrayVal *Create(Context &mgr, const std::vector<VALUE*>&_vals); 
+    VALUE* clone(Context &mgr) noexcept;
     inline std::vector<VALUE*> &getVals() { return vals; }
     bool updateValue(VALUE *val);
 };
 
 
 class StructVal: public VALUE {
-    std::map<std::string, VALUE*>vals;
+    std::map<String, VALUE*>vals;
     public:
-    StructVal(std::map<std::string, VALUE*> &_vals)
+    StructVal(std::map<String, VALUE*> &_vals)
     :VALUE(ValID::VStruct), vals(_vals) {}
     ~StructVal(){}
 
-    static StructVal *Create(ResourceMgr &mgr, const std::map<std::string, VALUE*> &_vals);
-    VALUE* clone(ResourceMgr &mgr) noexcept;
-    inline void insert(std::string &id, VALUE* val) { vals.insert({id, val}); }
-    inline std::map<std::string, VALUE*> &getVals() noexcept { return vals; }
-    inline VALUE* getVal(const std::string &s)  noexcept {
+    static StructVal *Create(Context &mgr, const std::map<String, VALUE*> &_vals);
+    VALUE* clone(Context &mgr) noexcept;
+    inline void insert(String &id, VALUE* val) { vals.insert({id, val}); }
+    inline std::map<String, VALUE*> &getVals() noexcept { return vals; }
+    inline VALUE* getVal(const String &s)  noexcept {
         return vals.find(s) == vals.end()?0:vals[s];
     }
     bool updateValue(VALUE *val);

@@ -1,4 +1,5 @@
-# cmake_minimum_required(VERSION 3.25.1)
+# CMakeLists.txt
+# cmake_minimum_required(VERSION 3.12)
 # project(metal)
 
 # set(CMAKE_CXX_STANDARD 20)
@@ -7,10 +8,162 @@
 # set(CMAKE_CXX_FLAGS_DEBUG ON)
 # set(CMAKE_CXX_COMPILE_FEATURES ON)
 
+# set(LLVM_DIR  "/llvm/build/lib/cmake/llvm/")
+# set(LLVM_INCLUDE_DIRS  "/llvm/build/include")
+# set(LLVM_LIB_DIRS  "/llvm/build/lib")
 
-# set(LLVM_DIR LLVM_DIR_PATH)
+# include_directories(Metal PRIVATE ${PROJECT_SOURCE_DIR}/include)
+
+# set(SOURCES
+# src/main.cpp
+# src/ResMgr.cpp
+# src/Module.cpp
+# src/lex/lex.cpp 
+# src/parser/Ast.cpp 
+# src/utils/File.cpp
+# src/utils/Error.cpp
+# src/parser/util.cpp
+# src/parser/Parser.cpp  
+# src/parser/type.cpp  
+# src/parser/Value.cpp  
+
+# src/codegen/AsmGen.cpp  
+# src/codegen/IR.cpp  
+# src/codegen/FunctionIR.cpp  
+# src/codegen/ExprIR.cpp  
+# src/codegen/StmtIR.cpp  
+# src/codegen/TypeIR.cpp  
+# src/codegen/IntrinsicIR.cpp
+# src/codegen/init.cpp
+
+# src/analyzer/Extern.cpp
+# src/analyzer/Intrinsic.cpp
+# src/analyzer/v.cpp
+# src/analyzer/Resolve.cpp
+# src/analyzer/Sema.cpp
+# src/analyzer/StmtTy.cpp
+# src/analyzer/Stmt.cpp
+# src/analyzer/Expr.cpp
+# src/analyzer/refn.cpp
+# )
+
+# set(MYLANG_EXECUTABLE "metal")
+# add_executable(${MYLANG_EXECUTABLE} ${SOURCES})
+# include_directories(${LLVM_INCLUDE_DIRS})
+
+# target_include_directories(${MYLANG_EXECUTABLE} PRIVATE ${LLVM_INCLUDE_DIRS})
+# target_link_directories(${MYLANG_EXECUTABLE} PRIVATE ${LLVM_LIB_DIRS})
+
+# target_link_libraries(${MYLANG_EXECUTABLE} 
+# LLVMWindowsManifest LLVMXRay LLVMLibDriver LLVMDlltoolDriver LLVMCoverage LLVMLineEditor LLVMXCoreDisassembler LLVMXCoreCodeGen LLVMXCoreDesc LLVMXCoreInfo LLVMX86TargetMCA LLVMX86Disassembler LLVMX86AsmParser LLVMX86CodeGen LLVMX86Desc LLVMX86Info LLVMWebAssemblyDisassembler LLVMWebAssemblyAsmParser LLVMWebAssemblyCodeGen LLVMWebAssemblyUtils LLVMWebAssemblyDesc LLVMWebAssemblyInfo LLVMVEDisassembler LLVMVEAsmParser LLVMVECodeGen LLVMVEDesc LLVMVEInfo LLVMSystemZDisassembler LLVMSystemZAsmParser LLVMSystemZCodeGen LLVMSystemZDesc LLVMSystemZInfo LLVMSparcDisassembler LLVMSparcAsmParser LLVMSparcCodeGen LLVMSparcDesc LLVMSparcInfo LLVMRISCVTargetMCA LLVMRISCVDisassembler LLVMRISCVAsmParser LLVMRISCVCodeGen LLVMRISCVDesc LLVMRISCVInfo LLVMPowerPCDisassembler LLVMPowerPCAsmParser LLVMPowerPCCodeGen LLVMPowerPCDesc LLVMPowerPCInfo LLVMNVPTXCodeGen LLVMNVPTXDesc LLVMNVPTXInfo LLVMMSP430Disassembler LLVMMSP430AsmParser LLVMMSP430CodeGen LLVMMSP430Desc LLVMMSP430Info LLVMMipsDisassembler LLVMMipsAsmParser LLVMMipsCodeGen LLVMMipsDesc LLVMMipsInfo LLVMLoongArchDisassembler LLVMLoongArchAsmParser LLVMLoongArchCodeGen LLVMLoongArchDesc LLVMLoongArchInfo LLVMLanaiDisassembler LLVMLanaiCodeGen LLVMLanaiAsmParser LLVMLanaiDesc LLVMLanaiInfo LLVMHexagonDisassembler LLVMHexagonCodeGen LLVMHexagonAsmParser LLVMHexagonDesc LLVMHexagonInfo LLVMBPFDisassembler LLVMBPFAsmParser LLVMBPFCodeGen LLVMBPFDesc LLVMBPFInfo LLVMAVRDisassembler LLVMAVRAsmParser LLVMAVRCodeGen LLVMAVRDesc LLVMAVRInfo LLVMARMDisassembler LLVMARMAsmParser LLVMARMCodeGen LLVMARMDesc LLVMARMUtils LLVMARMInfo LLVMAMDGPUTargetMCA LLVMAMDGPUDisassembler LLVMAMDGPUAsmParser LLVMAMDGPUCodeGen LLVMAMDGPUDesc LLVMAMDGPUUtils LLVMAMDGPUInfo LLVMAArch64Disassembler LLVMAArch64AsmParser LLVMAArch64CodeGen LLVMAArch64Desc LLVMAArch64Utils LLVMAArch64Info LLVMOrcJIT LLVMWindowsDriver LLVMMCJIT LLVMJITLink LLVMInterpreter LLVMExecutionEngine LLVMRuntimeDyld LLVMOrcTargetProcess LLVMOrcShared LLVMDWP LLVMDebugInfoLogicalView LLVMDebugInfoGSYM LLVMOption LLVMObjectYAML LLVMObjCopy LLVMMCA LLVMMCDisassembler LLVMLTO LLVMPasses LLVMCFGuard LLVMCoroutines LLVMipo LLVMVectorize LLVMLinker LLVMInstrumentation LLVMFrontendOpenMP LLVMFrontendOpenACC LLVMFrontendHLSL LLVMExtensions LLVMDWARFLinkerParallel LLVMDWARFLinker LLVMGlobalISel LLVMMIRParser LLVMAsmPrinter LLVMSelectionDAG LLVMCodeGen LLVMTarget LLVMObjCARCOpts LLVMCodeGenTypes LLVMIRPrinter LLVMInterfaceStub LLVMFileCheck LLVMFuzzMutate LLVMScalarOpts LLVMInstCombine LLVMAggressiveInstCombine LLVMTransformUtils LLVMBitWriter LLVMAnalysis LLVMProfileData LLVMSymbolize LLVMDebugInfoBTF LLVMDebugInfoPDB LLVMDebugInfoMSF LLVMDebugInfoDWARF LLVMObject LLVMTextAPI LLVMMCParser LLVMIRReader LLVMAsmParser LLVMMC LLVMDebugInfoCodeView LLVMBitReader LLVMFuzzerCLI LLVMCore LLVMRemarks LLVMBitstreamReader LLVMBinaryFormat LLVMTargetParser LLVMTableGen LLVMSupport LLVMDemangle
+# )
 
 
+
+
+
+
+
+
+
+
+
+
+# cmake_minimum_required(VERSION 3.12)
+# project(MyLang)
+
+# # Set the source directory
+# set(MYLANG_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+# # Set the build directory
+# set(MYLANG_BUILD_DIR "${MYLANG_SOURCE_DIR}/build")
+
+# # Set the installation directory
+# set(INSTALL_DIR "/usr/local/bin")
+
+# # Set the executable name
+# set(MYLANG_EXECUTABLE "metal")
+
+# # Check if directories exist, create if not
+# if (NOT EXISTS ${MYLANG_BUILD_DIR})
+#     file(MAKE_DIRECTORY ${MYLANG_BUILD_DIR})
+# endif()
+
+# # Move to the build directory
+# set(CMAKE_CURRENT_BINARY_DIR ${MYLANG_BUILD_DIR})
+# set(CMAKE_CURRENT_SOURCE_DIR ${MYLANG_BUILD_DIR})
+
+# # LLVM Archive URL and Destination
+# set(LLVM_ARCHIVE_URL "https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.1/llvm-project-17.0.1.src.tar.xz")
+# set(LLVM_ARCHIVE_DEST "${MYLANG_BUILD_DIR}/llvm.tar.xz")
+
+# message("Downloading and building LLVM....")
+
+# # Download LLVM archive
+# file(DOWNLOAD ${LLVM_ARCHIVE_URL} ${LLVM_ARCHIVE_DEST})
+
+# # Extract LLVM archive to the correct path
+# execute_process(
+#     COMMAND ${CMAKE_COMMAND} -E tar xzf ${LLVM_ARCHIVE_DEST}
+#     WORKING_DIRECTORY ${MYLANG_BUILD_DIR}
+#     )
+    
+#     # Move to the LLVM source directory
+#     set(CMAKE_CURRENT_BINARY_DIR ${MYLANG_BUILD_DIR}/llvm-project-17.0.1.src)
+#     set(CMAKE_CURRENT_SOURCE_DIR ${MYLANG_BUILD_DIR}/llvm-project-17.0.1.src)
+    
+# message("building LLVM....")
+
+# # Configure LLVM using CMake with Ninja as the generator
+# execute_process(
+#     COMMAND cmake -G Ninja
+#         -DCMAKE_BUILD_TYPE=Debug
+#         -DLLVM_ENABLE_PROJECTS=llvm
+#         -S ${MYLANG_BUILD_DIR}/llvm-project-17.0.1.src/llvm
+#         -B ${MYLANG_BUILD_DIR}/llvm-project-17.0.1.src/build
+#         ..
+#     RESULT_VARIABLE CONFIGURE_RESULT
+# )
+
+# # Check for errors in CMake configuration
+# if (CONFIGURE_RESULT)
+#     message(FATAL_ERROR "Error: Failed to configure LLVM using CMake.")
+# endif()
+
+# # Build LLVM using Ninja
+# execute_process(
+#     COMMAND ninja
+#     RESULT_VARIABLE BUILD_RESULT
+# )
+
+# # Check for errors in building LLVM
+# if (BUILD_RESULT)
+#     message(FATAL_ERROR "Error: Failed to build LLVM using Ninja.")
+# endif()
+
+# message("LLVM is built.")
+
+# # Move back to the main build directory
+# set(CMAKE_CURRENT_BINARY_DIR ${MYLANG_BUILD_DIR})
+# set(CMAKE_CURRENT_SOURCE_DIR ${MYLANG_BUILD_DIR})
+
+# # Set LLVM paths
+# set(LLVM_DIR_PATH "${MYLANG_BUILD_DIR}/llvm-project-17.0.1.src/build/lib/cmake/llvm/LLVM")
+# set(LLVM_INC_PATH "${MYLANG_BUILD_DIR}/llvm-project-17.0.1.src/build/include")
+# set(LLVM_LIB_PATH "${MYLANG_BUILD_DIR}/llvm-project-17.0.1.src/build/lib")
+
+# # Step 3: Compile and link with LLVM dynamically
+# set(CMAKE_CURRENT_BINARY_DIR ${MYLANG_BUILD_DIR})
+# set(CMAKE_CURRENT_SOURCE_DIR ${MYLANG_BUILD_DIR})
+# add_definitions(-D LLVM_DIR_PATH="${LLVM_DIR_PATH}")
+# add_definitions(-D LLVM_INC_PATH="${LLVM_INC_PATH}")
+# add_definitions(-D LLVM_LIB_PATH="${LLVM_LIB_PATH}")
+
+# # Move back to the main build directory
+# set(CMAKE_CURRENT_BINARY_DIR ${MYLANG_BUILD_DIR})
+# set(CMAKE_CURRENT_SOURCE_DIR ${MYLANG_BUILD_DIR})
+
+# # Compile your language source files
 # include_directories(UnknownLang PRIVATE ${PROJECT_SOURCE_DIR}/include)
 # set(SOURCES 
 # src/main.cpp
@@ -49,23 +202,24 @@
 # src/analyzer/refn.cpp
 # )
 
-# find_package(LLVM REQUIRED CONFIG)
-# # find_package(${LLVM_DIR})
+# # file(GLOB_RECURSE MYLANG_SOURCES ${MYLANG_SOURCE_DIR}/*.cpp) # Adjust the extension as needed
+# add_executable(${MYLANG_EXECUTABLE} ${MYLANG_SOURCES})
 
-# # include_directories(${LLVM_INCLUDE_PATH})
-# include_directories(${LLVM_INC_PATH})
-# separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
-# # add_definitions(${LLVM_DEFINITIONS})
-# add_definitions(${LLVM_DEFINITIONS})
-
-# add_executable(metal ${SOURCES})
-
-# llvm_map_components_to_libnames(llvm_libs support core irreader codegen)
-
-
-# target_link_libraries(metal
+# # Link with LLVM libraries
+# target_include_directories(${MYLANG_EXECUTABLE} PRIVATE ${LLVM_INC_PATH})
+# target_link_directories(${MYLANG_EXECUTABLE} PRIVATE ${LLVM_LIB_PATH})
+# # target_link_libraries(${MYLANG_EXECUTABLE} PRIVATE LLVM)
+# target_link_libraries(${MYLANG_EXECUTABLE} 
 # LLVMWindowsManifest LLVMXRay LLVMLibDriver LLVMDlltoolDriver LLVMCoverage LLVMLineEditor LLVMXCoreDisassembler LLVMXCoreCodeGen LLVMXCoreDesc LLVMXCoreInfo LLVMX86TargetMCA LLVMX86Disassembler LLVMX86AsmParser LLVMX86CodeGen LLVMX86Desc LLVMX86Info LLVMWebAssemblyDisassembler LLVMWebAssemblyAsmParser LLVMWebAssemblyCodeGen LLVMWebAssemblyUtils LLVMWebAssemblyDesc LLVMWebAssemblyInfo LLVMVEDisassembler LLVMVEAsmParser LLVMVECodeGen LLVMVEDesc LLVMVEInfo LLVMSystemZDisassembler LLVMSystemZAsmParser LLVMSystemZCodeGen LLVMSystemZDesc LLVMSystemZInfo LLVMSparcDisassembler LLVMSparcAsmParser LLVMSparcCodeGen LLVMSparcDesc LLVMSparcInfo LLVMRISCVTargetMCA LLVMRISCVDisassembler LLVMRISCVAsmParser LLVMRISCVCodeGen LLVMRISCVDesc LLVMRISCVInfo LLVMPowerPCDisassembler LLVMPowerPCAsmParser LLVMPowerPCCodeGen LLVMPowerPCDesc LLVMPowerPCInfo LLVMNVPTXCodeGen LLVMNVPTXDesc LLVMNVPTXInfo LLVMMSP430Disassembler LLVMMSP430AsmParser LLVMMSP430CodeGen LLVMMSP430Desc LLVMMSP430Info LLVMMipsDisassembler LLVMMipsAsmParser LLVMMipsCodeGen LLVMMipsDesc LLVMMipsInfo LLVMLoongArchDisassembler LLVMLoongArchAsmParser LLVMLoongArchCodeGen LLVMLoongArchDesc LLVMLoongArchInfo LLVMLanaiDisassembler LLVMLanaiCodeGen LLVMLanaiAsmParser LLVMLanaiDesc LLVMLanaiInfo LLVMHexagonDisassembler LLVMHexagonCodeGen LLVMHexagonAsmParser LLVMHexagonDesc LLVMHexagonInfo LLVMBPFDisassembler LLVMBPFAsmParser LLVMBPFCodeGen LLVMBPFDesc LLVMBPFInfo LLVMAVRDisassembler LLVMAVRAsmParser LLVMAVRCodeGen LLVMAVRDesc LLVMAVRInfo LLVMARMDisassembler LLVMARMAsmParser LLVMARMCodeGen LLVMARMDesc LLVMARMUtils LLVMARMInfo LLVMAMDGPUTargetMCA LLVMAMDGPUDisassembler LLVMAMDGPUAsmParser LLVMAMDGPUCodeGen LLVMAMDGPUDesc LLVMAMDGPUUtils LLVMAMDGPUInfo LLVMAArch64Disassembler LLVMAArch64AsmParser LLVMAArch64CodeGen LLVMAArch64Desc LLVMAArch64Utils LLVMAArch64Info LLVMOrcDebugging LLVMOrcJIT LLVMWindowsDriver LLVMMCJIT LLVMJITLink LLVMInterpreter LLVMExecutionEngine LLVMRuntimeDyld LLVMOrcTargetProcess LLVMOrcShared LLVMDWP LLVMDebugInfoLogicalView LLVMDebugInfoGSYM LLVMOption LLVMObjectYAML LLVMObjCopy LLVMMCA LLVMMCDisassembler LLVMLTO LLVMPasses LLVMCFGuard LLVMCoroutines LLVMipo LLVMVectorize LLVMLinker LLVMInstrumentation LLVMFrontendOpenMP LLVMFrontendOpenACC LLVMFrontendHLSL LLVMExtensions LLVMDWARFLinkerParallel LLVMDWARFLinker LLVMGlobalISel LLVMMIRParser LLVMAsmPrinter LLVMSelectionDAG LLVMCodeGen LLVMTarget LLVMObjCARCOpts LLVMCodeGenTypes LLVMIRPrinter LLVMInterfaceStub LLVMFileCheck LLVMFuzzMutate LLVMScalarOpts LLVMInstCombine LLVMAggressiveInstCombine LLVMTransformUtils LLVMBitWriter LLVMAnalysis LLVMProfileData LLVMSymbolize LLVMDebugInfoBTF LLVMDebugInfoPDB LLVMDebugInfoMSF LLVMDebugInfoDWARF LLVMObject LLVMTextAPI LLVMMCParser LLVMIRReader LLVMAsmParser LLVMMC LLVMDebugInfoCodeView LLVMBitReader LLVMFuzzerCLI LLVMCore LLVMRemarks LLVMBitstreamReader LLVMBinaryFormat LLVMTargetParser LLVMTableGen LLVMSupport LLVMDemangle
 # )
+# # Step 4: Install mylang compiler to /usr/local/bin/
+# install(TARGETS ${MYLANG_EXECUTABLE} DESTINATION ${INSTALL_DIR})
+
+# # Step 5: Clean up temporary files
+# file(REMOVE_RECURSE ${MYLANG_BUILD_DIR}/llvm-project-17.0.1.src)
+# file(REMOVE ${LLVM_ARCHIVE_DEST})
+
+# message("Installation complete.")
 
 
 # # add_executable(metal "${PROJECT_SOURCE_DIR}/src/main.cpp" ${SRCS} ${INCS})
@@ -168,7 +322,7 @@ llvm_map_components_to_libnames(llvm_libs support core irreader codegen)
 # target_link_libraries(metal ${llvm_libs})
 
 target_link_libraries(metal
-LLVMWindowsManifest LLVMXRay LLVMLibDriver LLVMDlltoolDriver LLVMCoverage LLVMLineEditor LLVMXCoreDisassembler LLVMXCoreCodeGen LLVMXCoreDesc LLVMXCoreInfo LLVMX86TargetMCA LLVMX86Disassembler LLVMX86AsmParser LLVMX86CodeGen LLVMX86Desc LLVMX86Info LLVMWebAssemblyDisassembler LLVMWebAssemblyAsmParser LLVMWebAssemblyCodeGen LLVMWebAssemblyUtils LLVMWebAssemblyDesc LLVMWebAssemblyInfo LLVMVEDisassembler LLVMVEAsmParser LLVMVECodeGen LLVMVEDesc LLVMVEInfo LLVMSystemZDisassembler LLVMSystemZAsmParser LLVMSystemZCodeGen LLVMSystemZDesc LLVMSystemZInfo LLVMSparcDisassembler LLVMSparcAsmParser LLVMSparcCodeGen LLVMSparcDesc LLVMSparcInfo LLVMRISCVTargetMCA LLVMRISCVDisassembler LLVMRISCVAsmParser LLVMRISCVCodeGen LLVMRISCVDesc LLVMRISCVInfo LLVMPowerPCDisassembler LLVMPowerPCAsmParser LLVMPowerPCCodeGen LLVMPowerPCDesc LLVMPowerPCInfo LLVMNVPTXCodeGen LLVMNVPTXDesc LLVMNVPTXInfo LLVMMSP430Disassembler LLVMMSP430AsmParser LLVMMSP430CodeGen LLVMMSP430Desc LLVMMSP430Info LLVMMipsDisassembler LLVMMipsAsmParser LLVMMipsCodeGen LLVMMipsDesc LLVMMipsInfo LLVMLoongArchDisassembler LLVMLoongArchAsmParser LLVMLoongArchCodeGen LLVMLoongArchDesc LLVMLoongArchInfo LLVMLanaiDisassembler LLVMLanaiCodeGen LLVMLanaiAsmParser LLVMLanaiDesc LLVMLanaiInfo LLVMHexagonDisassembler LLVMHexagonCodeGen LLVMHexagonAsmParser LLVMHexagonDesc LLVMHexagonInfo LLVMBPFDisassembler LLVMBPFAsmParser LLVMBPFCodeGen LLVMBPFDesc LLVMBPFInfo LLVMAVRDisassembler LLVMAVRAsmParser LLVMAVRCodeGen LLVMAVRDesc LLVMAVRInfo LLVMARMDisassembler LLVMARMAsmParser LLVMARMCodeGen LLVMARMDesc LLVMARMUtils LLVMARMInfo LLVMAMDGPUTargetMCA LLVMAMDGPUDisassembler LLVMAMDGPUAsmParser LLVMAMDGPUCodeGen LLVMAMDGPUDesc LLVMAMDGPUUtils LLVMAMDGPUInfo LLVMAArch64Disassembler LLVMAArch64AsmParser LLVMAArch64CodeGen LLVMAArch64Desc LLVMAArch64Utils LLVMAArch64Info LLVMOrcDebugging LLVMOrcJIT LLVMWindowsDriver LLVMMCJIT LLVMJITLink LLVMInterpreter LLVMExecutionEngine LLVMRuntimeDyld LLVMOrcTargetProcess LLVMOrcShared LLVMDWP LLVMDebugInfoLogicalView LLVMDebugInfoGSYM LLVMOption LLVMObjectYAML LLVMObjCopy LLVMMCA LLVMMCDisassembler LLVMLTO LLVMPasses LLVMCFGuard LLVMCoroutines LLVMipo LLVMVectorize LLVMLinker LLVMInstrumentation LLVMFrontendOpenMP LLVMFrontendOpenACC LLVMFrontendHLSL LLVMExtensions LLVMDWARFLinkerParallel LLVMDWARFLinker LLVMGlobalISel LLVMMIRParser LLVMAsmPrinter LLVMSelectionDAG LLVMCodeGen LLVMTarget LLVMObjCARCOpts LLVMCodeGenTypes LLVMIRPrinter LLVMInterfaceStub LLVMFileCheck LLVMFuzzMutate LLVMScalarOpts LLVMInstCombine LLVMAggressiveInstCombine LLVMTransformUtils LLVMBitWriter LLVMAnalysis LLVMProfileData LLVMSymbolize LLVMDebugInfoBTF LLVMDebugInfoPDB LLVMDebugInfoMSF LLVMDebugInfoDWARF LLVMObject LLVMTextAPI LLVMMCParser LLVMIRReader LLVMAsmParser LLVMMC LLVMDebugInfoCodeView LLVMBitReader LLVMFuzzerCLI LLVMCore LLVMRemarks LLVMBitstreamReader LLVMBinaryFormat LLVMTargetParser LLVMTableGen LLVMSupport LLVMDemangle
+LLVMWindowsManifest LLVMXRay LLVMLibDriver LLVMDlltoolDriver LLVMCoverage LLVMLineEditor LLVMXCoreDisassembler LLVMXCoreCodeGen LLVMXCoreDesc LLVMXCoreInfo LLVMX86TargetMCA LLVMX86Disassembler LLVMX86AsmParser LLVMX86CodeGen LLVMX86Desc LLVMX86Info LLVMWebAssemblyDisassembler LLVMWebAssemblyAsmParser LLVMWebAssemblyCodeGen LLVMWebAssemblyUtils LLVMWebAssemblyDesc LLVMWebAssemblyInfo LLVMVEDisassembler LLVMVEAsmParser LLVMVECodeGen LLVMVEDesc LLVMVEInfo LLVMSystemZDisassembler LLVMSystemZAsmParser LLVMSystemZCodeGen LLVMSystemZDesc LLVMSystemZInfo LLVMSparcDisassembler LLVMSparcAsmParser LLVMSparcCodeGen LLVMSparcDesc LLVMSparcInfo LLVMRISCVTargetMCA LLVMRISCVDisassembler LLVMRISCVAsmParser LLVMRISCVCodeGen LLVMRISCVDesc LLVMRISCVInfo LLVMPowerPCDisassembler LLVMPowerPCAsmParser LLVMPowerPCCodeGen LLVMPowerPCDesc LLVMPowerPCInfo LLVMNVPTXCodeGen LLVMNVPTXDesc LLVMNVPTXInfo LLVMMSP430Disassembler LLVMMSP430AsmParser LLVMMSP430CodeGen LLVMMSP430Desc LLVMMSP430Info LLVMMipsDisassembler LLVMMipsAsmParser LLVMMipsCodeGen LLVMMipsDesc LLVMMipsInfo LLVMLoongArchDisassembler LLVMLoongArchAsmParser LLVMLoongArchCodeGen LLVMLoongArchDesc LLVMLoongArchInfo LLVMLanaiDisassembler LLVMLanaiCodeGen LLVMLanaiAsmParser LLVMLanaiDesc LLVMLanaiInfo LLVMHexagonDisassembler LLVMHexagonCodeGen LLVMHexagonAsmParser LLVMHexagonDesc LLVMHexagonInfo LLVMBPFDisassembler LLVMBPFAsmParser LLVMBPFCodeGen LLVMBPFDesc LLVMBPFInfo LLVMAVRDisassembler LLVMAVRAsmParser LLVMAVRCodeGen LLVMAVRDesc LLVMAVRInfo LLVMARMDisassembler LLVMARMAsmParser LLVMARMCodeGen LLVMARMDesc LLVMARMUtils LLVMARMInfo LLVMAMDGPUTargetMCA LLVMAMDGPUDisassembler LLVMAMDGPUAsmParser LLVMAMDGPUCodeGen LLVMAMDGPUDesc LLVMAMDGPUUtils LLVMAMDGPUInfo LLVMAArch64Disassembler LLVMAArch64AsmParser LLVMAArch64CodeGen LLVMAArch64Desc LLVMAArch64Utils LLVMAArch64Info LLVMOrcJIT LLVMWindowsDriver LLVMMCJIT LLVMJITLink LLVMInterpreter LLVMExecutionEngine LLVMRuntimeDyld LLVMOrcTargetProcess LLVMOrcShared LLVMDWP LLVMDebugInfoLogicalView LLVMDebugInfoGSYM LLVMOption LLVMObjectYAML LLVMObjCopy LLVMMCA LLVMMCDisassembler LLVMLTO LLVMPasses LLVMCFGuard LLVMCoroutines LLVMipo LLVMVectorize LLVMLinker LLVMInstrumentation LLVMFrontendOpenMP LLVMFrontendOpenACC LLVMFrontendHLSL LLVMExtensions LLVMDWARFLinkerParallel LLVMDWARFLinker LLVMGlobalISel LLVMMIRParser LLVMAsmPrinter LLVMSelectionDAG LLVMCodeGen LLVMTarget LLVMObjCARCOpts LLVMCodeGenTypes LLVMIRPrinter LLVMInterfaceStub LLVMFileCheck LLVMFuzzMutate LLVMScalarOpts LLVMInstCombine LLVMAggressiveInstCombine LLVMTransformUtils LLVMBitWriter LLVMAnalysis LLVMProfileData LLVMSymbolize LLVMDebugInfoBTF LLVMDebugInfoPDB LLVMDebugInfoMSF LLVMDebugInfoDWARF LLVMObject LLVMTextAPI LLVMMCParser LLVMIRReader LLVMAsmParser LLVMMC LLVMDebugInfoCodeView LLVMBitReader LLVMFuzzerCLI LLVMCore LLVMRemarks LLVMBitstreamReader LLVMBinaryFormat LLVMTargetParser LLVMTableGen LLVMSupport LLVMDemangle
 )
 
 

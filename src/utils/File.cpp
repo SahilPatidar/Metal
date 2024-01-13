@@ -6,12 +6,12 @@
 #include"../../include/utils/File.hpp"
 namespace fs{
 
-bool get_src(std::string &_path, std::string &src) {
+bool get_src(std::string &_path, std::string &src, bool is_mod) {
     char buffer[256];
     FILE* file;
     file = fopen(_path.c_str(), "r");
-    if(file == NULL) {
-        // fprintf(stderr, "Error: unable to open file: %s\n", _path.c_str());
+    if(file == NULL && !is_mod) {
+        fprintf(stderr, "Error: unable to open source file: %s\n", _path.c_str());
         return false;
     }
     while(fgets(buffer, sizeof(buffer), file) != NULL) {
@@ -49,7 +49,7 @@ bool get_root_mod_src(std::string &path, std::string &src, std::string &dirp, st
     if(dirp.empty()){
         return false;
     }
-    if(!get_src(path,src)){
+    if(!get_src(path, src)){
         return false;
     }
     return true;
@@ -63,7 +63,7 @@ bool get_sub_mod_src(std::string &path, const std::string &modname, std::string 
     std::string modpath1 = path+"/"+modname+"/mod.mt";
     std::string modpath2 = path+"/"+modname+".mt";
     bool f1 = false,f2 = false;
-    if(!(f1 = get_src(modpath1, src))&&!(f2 = get_src(modpath2, src))){
+    if(!(f1 = get_src(modpath1, src, true))&&!(f2 = get_src(modpath2, src, true))){
         fprintf(stderr, "error: no module find in scope - %s\n", modname.c_str());
         return false;
     }

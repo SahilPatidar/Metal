@@ -3,5 +3,5 @@
 
 namespace codegen{
     using namespace llvm;
-    void LLVMIRToAsm(Module &TheModule);
+    void LLVMIRToAsm(Module &TheModule, std::string sourcePath);
 }

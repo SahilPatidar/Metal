@@ -3,7 +3,7 @@
 #include<map>
 #include<stack>
 #include"lex/lex.hpp"
-#include"ResMgr.hpp"
+#include"Context.hpp"
 namespace ast{
 
 /*
@@ -20,66 +20,65 @@ namespace ast{
 
 
 // class Ast;
-// class Ast;
 
 struct ModuleInfo{
-    std::string path;
-    std::string dirpath;
-    std::string src;
-    std::string modname;
+    String path;
+    String dirpath;
+    String src;
+    String modname;
 };
 
 
 class Module{
 private:
-    std::map<std::string, Module* >submods;    
-    ModuleInfo modinfo;
-    std::vector<lex::Lexeme>lexeme;
-    Ast *tree;
-    std::map<std::string, Ast **>moditem;
+    Map<String, Module* >SubMods;    
+    ModuleInfo ModInfo;
+    Vec<Lexeme>LXMs;
+    Ast *AsT;
+    Map<String, Ast **>ModItems;
     friend class ModuleHelper;
 public:
-    Module(const ModuleInfo _modinfo)
-    : modinfo(_modinfo){
-        tree = nullptr;
+    Module(const ModuleInfo _ModInfo)
+    : ModInfo(_ModInfo){
+        AsT = nullptr;
     }
     
     ~Module();
 
-    inline const std::vector<lex::Lexeme> &getLexeme() const noexcept { return lexeme; }
-    inline const std::map<std::string, Module*> &getSubMods() const { return submods; }
-    inline Module* getSubMod(const std::string &s) {
-        return submods.find(s) == submods.end()? 0: submods[s];
+    inline const Vec<Lexeme> &getLexeme() const noexcept { return LXMs; }
+    inline const Map<String, Module*> &getSubMods() const { return SubMods; }
+    inline Module* getSubMod(const String &s) {
+        return SubMods.find(s) == SubMods.end()? nullptr: SubMods[s];
     }
     /// module info
-    inline std::string getDirPath() const { return modinfo.dirpath; }
-    inline std::string getPath() const { return modinfo.path; }
-    inline std::string getSrc() const { return modinfo.src; }
+    inline String getDirPath() const { return ModInfo.dirpath; }
+    inline String getPath() const { return ModInfo.path; }
+    inline String getSrc() const { return ModInfo.src; }
 
-    inline Ast *getTree() const { return tree; }
+    inline Ast *getAst() const { return AsT; }
 
-    inline std::string getModId() const { return modinfo.modname; }
+    inline String getModId() const { return ModInfo.modname; }
 
-    inline Ast **getModItems(const std::string &s) {
-        return moditem.find(s) == moditem.end()? 0:moditem[s];
+    inline Ast **getModItemss(const String &s) {
+        return ModItems.find(s) == ModItems.end()? nullptr:ModItems[s];
     }
 
-    inline void insertModItem(std::string s, Ast **stmt) {
-        if(moditem.find(s) != moditem.end()) {
+    inline void insertModItem(String S, Ast **_Stmt) {
+        if(ModItems.find(S) != ModItems.end()) {
             return;
         }
-        moditem.insert({s, stmt});
+        ModItems.insert({S, _Stmt});
     }
 
-    inline bool HasStmt(const std::string &s) noexcept { return moditem.find(s) != moditem.end(); }
+    inline bool HasStmt(const String &S) noexcept { return ModItems.find(S) != ModItems.end(); }
 
-    inline const std::map<std::string, Ast **> &getModItems() const noexcept { return moditem; }
-    void printTree();
+    inline const Map<String, Ast **> &getModItemss() const noexcept { return ModItems; }
+    void printAsT();
 };  
 
 
-bool CreateModInfoByMod(std::string &path, const std::string &modname, ModuleInfo &modinfo);
-bool CreateModInfoByAbsPath(std::string &path, ModuleInfo &modinfo);
+bool CreateModInfoByMod(String &path, const String &modname, ModuleInfo &ModInfo);
+bool CreateModInfoByAbsPath(String &path, ModuleInfo &ModInfo);
 
 class ModuleHelper{
 public:
@@ -88,11 +87,11 @@ public:
 
     ~ModuleHelper();
 
-    bool LexSrc(ResourceMgr &mgr); 
-    bool ParseToken(ResourceMgr &mgr);
-    bool ResolveAst(ResourceMgr &mgr, Module *RMod);
-    bool SemaAst(ResourceMgr &mgr, Module *RMod);
-    static Module *CreateMod(ResourceMgr &mgr, std::string modName, Module *PMod);
+    bool LexSrc(Context &mgr); 
+    bool ParseToken(Context &mgr);
+    bool ResolveAst(Context &mgr, Module *RMod);
+    bool SemaAst(Context &mgr, Module *RMod);
+    static Module *CreateMod(Context &mgr, String modName, Module *PMod);
 
 private:
     Module *Mod;

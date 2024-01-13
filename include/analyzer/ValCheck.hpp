@@ -10,7 +10,7 @@ namespace ast{
 
 class ValChecker: public AstVisitor {
 private:
-    ResourceMgr &mgr;
+    Context &mgr;
     // std::vector<VALUE *>LocalVal;
     bool mustConst{false};
     bool IsReturnStmt{false};
@@ -45,7 +45,7 @@ public:
     bool visit(StringLiteral *AstNode, Ast** Base);
     bool visit(Ast *AstNode, Ast **Base);
 
-    ValChecker(ResourceMgr &_mgr)
+    ValChecker(Context &_mgr)
     :mgr(_mgr) {}
     ~ValChecker(){}
 
