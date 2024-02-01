@@ -550,6 +550,19 @@ Value *IRCodegenVisitor::codegenBinaryExpr(ast::Expression &Expr) {
         Inst = Builder.CreateStore(Val,LhsOp);
     }
         break;
+    case ast::ASN_STAR:
+    {
+        if(IsFPTy)
+            Inst = Builder.CreateFMul(Lhs, Rhs);
+        else 
+            if(LIsS || RIsS) 
+                Inst = Builder.CreateNSWMul(Lhs, Rhs);
+            else 
+                Inst = Builder.CreateNUWMul(Lhs, Rhs);
+
+        Inst = Builder.CreateStore(Inst, LhsOp);
+    }
+        break;
     case ast::ASN_PLUS:
     {
         Value *Val = Builder.CreateAdd(Lhs,Rhs);
